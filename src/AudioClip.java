@@ -1,5 +1,3 @@
-package src;
-
 public class AudioClip {
     private String audioName;
     private String filePath;

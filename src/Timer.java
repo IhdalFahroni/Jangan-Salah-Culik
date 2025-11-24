@@ -1,4 +1,3 @@
-package src;
 
 public class Timer implements Runnable {
     private int timeRemaining;

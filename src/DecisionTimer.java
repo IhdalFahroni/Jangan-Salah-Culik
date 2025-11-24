@@ -1,4 +1,3 @@
-package src;
 
 public class DecisionTimer extends Timer {
     private Choice currentChoice;

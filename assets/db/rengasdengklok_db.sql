@@ -34,7 +34,7 @@ CREATE TABLE `decisions` (
   `decision_code` varchar(10) DEFAULT NULL,
   `decision_text` varchar(255) DEFAULT NULL,
   `made_at` datetime DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+);
 
 -- --------------------------------------------------------
 
@@ -49,7 +49,7 @@ CREATE TABLE `leaderboard` (
   `score` int NOT NULL,
   `time_taken_seconds` int NOT NULL,
   `attempted_at` datetime DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+);
 
 --
 -- Dumping data for table `leaderboard`
@@ -72,7 +72,7 @@ CREATE TABLE `profiles` (
   `character_name` varchar(100) NOT NULL,
   `gender` enum('Male','Female','Other') NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+);
 
 --
 -- Dumping data for table `profiles`
@@ -100,7 +100,7 @@ CREATE TABLE `questions` (
   `difficulty` enum('Easy','Medium','Hard') DEFAULT 'Medium',
   `scene_reference` int DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+);
 
 --
 -- Dumping data for table `questions`
@@ -171,7 +171,7 @@ CREATE TABLE `quiz_attempts` (
   `total_questions` int NOT NULL,
   `time_taken_seconds` int NOT NULL,
   `attempted_at` datetime DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+);
 
 --
 -- Dumping data for table `quiz_attempts`
@@ -198,7 +198,7 @@ CREATE TABLE `sessions` (
   `ending_achieved` varchar(100) DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `last_updated` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+);
 
 --
 -- Dumping data for table `sessions`
@@ -219,7 +219,7 @@ CREATE TABLE `users` (
   `username` varchar(50) NOT NULL,
   `password` varchar(255) NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+);
 
 --
 -- Dumping data for table `users`

@@ -1,4 +1,3 @@
-package src;
 
 public class Character {
     private int characterId;
