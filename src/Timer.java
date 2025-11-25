@@ -3,32 +3,72 @@ public class Timer implements Runnable {
     private int timeRemaining;
     private boolean isRunning;
     private Thread timerThread;
-    
+
     public Timer(int initialTime) {
         this.timeRemaining = initialTime;
         this.isRunning = false;
     }
-    
+
     @Override
     public void run() {
-        // TODO: Implement timer countdown logic
+        while (isRunning && timeRemaining > 0) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+            if (!isRunning) {
+                break;
+            }
+            timeRemaining--;
+            onTick(timeRemaining);
+        }
+        if (isRunning) {
+            onTimerFinished();
+        }
+        isRunning = false;
     }
-    
+
     public void startTimer() {
-        // TODO: Implement timer start logic
+        if (isRunning) {
+            return;
+        }
+        isRunning = true;
+        timerThread = new Thread(this, "DecisionTimerThread");
+        timerThread.start();
     }
-    
+
     public void stopTimer() {
-        // TODO: Implement timer stop logic
+        isRunning = false;
+        if (timerThread != null) {
+            timerThread.interrupt();
+            timerThread = null;
+        }
     }
-    
+
     public int getTimeRemaining() {
-        // TODO: Implement get remaining time
         return timeRemaining;
     }
-    
+
     // Getters and Setters
-    public void setTimeRemaining(int timeRemaining) { this.timeRemaining = timeRemaining; }
-    public boolean isRunning() { return isRunning; }
-    public void setRunning(boolean running) { isRunning = running; }
+    public void setTimeRemaining(int timeRemaining) {
+        this.timeRemaining = timeRemaining;
+    }
+
+    public boolean isRunning() {
+        return isRunning;
+    }
+
+    public void setRunning(boolean running) {
+        isRunning = running;
+    }
+
+    protected void onTick(int remainingSeconds) {
+        // Hook for subclasses
+    }
+
+    protected void onTimerFinished() {
+        // Hook for subclasses
+    }
 }

@@ -1,7 +1,5 @@
 import javax.swing.SwingUtilities;
-
 public class App {
-
     public static void main(String[] args) {
         configureLookAndFeel();
         SwingUtilities.invokeLater(App::launchGame);
