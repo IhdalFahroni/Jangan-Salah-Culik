@@ -1,9 +1,7 @@
 {
   "java.project.sourcePaths": ["src"],
   "java.project.outputPath": "bin",
-  "java.project.referencedLibraries": [
-    "c:\\Dalll\\Kuliah\\SEMESTER 5\\PBO\\Praktikum\\Jangan-Salah-Culik\\assets\\Driver\\mysql-connector-j-9.1.0.jar"
-  ],
+  "java.project.referencedLibraries": ["assets/Driver/*.jar"],
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.compile.nullAnalysis.mode": "automatic",
   "java.debug.settings.onBuildFailureProceed": true

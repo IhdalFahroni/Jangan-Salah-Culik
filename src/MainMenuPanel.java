@@ -1,416 +1,329 @@
-
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
+import java.awt.geom.*;
+import java.awt.image.BufferedImage;
 
 public class MainMenuPanel extends JPanel {
+    
     private RengasdengklokGame mainApp;
-    private JButton startGameButton, quizButton, leaderboardButton, logoutButton;
-    private JLabel welcomeLabel;
-    private JButton profileButton;
-
-    // Color palette
-    private final Color BACKGROUND_COLOR = new Color(0xF5, 0xED, 0xE0); // Cream vintage
-    private final Color ACCENT_COLOR = new Color(0x8B, 0x45, 0x1E);     // Dark brown vintage
-    private final Color TEXT_COLOR = new Color(0x5D, 0x30, 0x3C);       // Deep brown
-    private final Color BUTTON_BACKGROUND = new Color(0xA0, 0x6C, 0x4F); // Medium brown
-    private final Color DIALOG_BACKGROUND = new Color(0xFA, 0xF3, 0xE8); // Light cream untuk dialog
-
+    
+    // Komponen
+    private MenuButton storyButton, quizButton, leaderboardButton;
+    private CircleButton muteButton, logoutButton;
+    private GreetingPill greetingPill;
+    private BufferedImage noiseTexture;
+    
+    // Ukuran
+    private static final int WINDOW_WIDTH = 1024;
+    private static final int WINDOW_HEIGHT = 768;
+    
     public MainMenuPanel(RengasdengklokGame mainApp) {
         this.mainApp = mainApp;
         setLayout(null);
-        setBackground(BACKGROUND_COLOR);
-        setPreferredSize(new Dimension(800, 600));
-        initializeUI();
-    }
-    
-    private void initializeUI() {
-        createTitle();
-        createWelcomeLabel();
-        createProfileButton();
-        createMenuButtons();
-        addDecorativeElements();
-    }
-    
-    private void createTitle() {
-        // Main Title
-        JLabel titleLabel = new JLabel("Rengasdengklok: Jangan Salah Culik!", JLabel.CENTER);
-        titleLabel.setBounds(200, 60, 400, 50);
-        titleLabel.setFont(new Font("Serif", Font.BOLD, 32));
-        titleLabel.setForeground(ACCENT_COLOR);
-        add(titleLabel);
+        setBackground(ColorPalette.DARK_BG_1);
+        setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
         
-        // Subtitle
-        JLabel subtitleLabel = new JLabel("Telltale Petualangan Sejarah 1945", JLabel.CENTER);
-        subtitleLabel.setBounds(200, 100, 400, 30);
-        subtitleLabel.setFont(new Font("Serif", Font.ITALIC, 16));
-        subtitleLabel.setForeground(new Color(0x7D, 0x5A, 0x45)); // Brown medium
-        add(subtitleLabel);
-    }
-    
-    private void createWelcomeLabel() {
-        String username = mainApp.getCurrentUsername();
-        String displayName = (username == null || username.isEmpty()) ? "Guest" : username;
-        
-        welcomeLabel = new JLabel("Selamat datang, " + displayName, JLabel.LEFT);
-        welcomeLabel.setBounds(50, 30, 400, 40);
-        welcomeLabel.setFont(new Font("Serif", Font.BOLD, 20));
-        welcomeLabel.setForeground(ACCENT_COLOR);
-        add(welcomeLabel);
-    }
-    
-    private void createProfileButton() {
-        // Profile button di pojok kanan atas 
-        profileButton = new JButton("👤"); 
-        profileButton.setBounds(700, 20, 50, 50);
-        profileButton.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
-        profileButton.setBackground(BUTTON_BACKGROUND);
-        profileButton.setForeground(ACCENT_COLOR);
-        profileButton.setFocusPainted(false);
-        profileButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        profileButton.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(ACCENT_COLOR, 2),
-            BorderFactory.createEmptyBorder(5, 5, 5, 5)
-        ));
-        
-        // Efek hover
-        profileButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                profileButton.setBackground(ACCENT_COLOR);
-                profileButton.setForeground(ACCENT_COLOR);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                profileButton.setBackground(BUTTON_BACKGROUND);
-                profileButton.setForeground(ACCENT_COLOR);
-            }
-        });
-        
-        profileButton.addActionListener(new ProfileListener());
-        add(profileButton);
-    }
-    
-    private void createMenuButtons() {
-        // Start Game Button
-        startGameButton = createMenuButton("Mulai Game Cerita", 180);
-        startGameButton.addActionListener(new StartGameListener());
-        add(startGameButton);
-
-        // Quiz Button  
-        quizButton = createMenuButton("Kuis Sejarah", 250);
-        quizButton.addActionListener(new QuizListener());
-        add(quizButton);
-
-        // Leaderboard Button
-        leaderboardButton = createMenuButton("Leaderboard", 320);
-        leaderboardButton.addActionListener(new LeaderboardListener());
-        add(leaderboardButton);
-
-        // Logout Button
-        logoutButton = createMenuButton("Logout", 390);
-        logoutButton.addActionListener(new LogoutListener());
-        add(logoutButton);
-    }
-    
-    private JButton createMenuButton(String text, int yPosition) {
-        JButton button = new JButton(text);
-        button.setBounds(200, yPosition, 400, 50);
-        button.setFont(new Font("Serif", Font.BOLD, 18));
-        button.setBackground(BUTTON_BACKGROUND);
-        button.setForeground(ACCENT_COLOR);
-        button.setFocusPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(ACCENT_COLOR, 2),
-            BorderFactory.createEmptyBorder(10, 20, 10, 20)
-        ));
-        
-        // Efek hover
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(ACCENT_COLOR);
-                button.setForeground(ACCENT_COLOR);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(BUTTON_BACKGROUND);
-                button.setForeground(ACCENT_COLOR);
-            }
-        });
-        
-        return button;
-    }
-    
-    private void addDecorativeElements() {
-        // Garis dekoratif atas
-        JSeparator topSeparator = new JSeparator(SwingConstants.HORIZONTAL);
-        topSeparator.setBounds(100, 150, 600, 2);
-        topSeparator.setForeground(ACCENT_COLOR);
-        topSeparator.setBackground(ACCENT_COLOR);
-        add(topSeparator);
-        
-        // Garis dekoratif bawah
-        JSeparator bottomSeparator = new JSeparator(SwingConstants.HORIZONTAL);
-        bottomSeparator.setBounds(100, 460, 600, 2);
-        bottomSeparator.setForeground(ACCENT_COLOR);
-        bottomSeparator.setBackground(ACCENT_COLOR);
-        add(bottomSeparator);
-        
-        // Corner decorations vintage
-        JLabel cornerTL = createCornerDecoration("╔", 80, 135);
-        JLabel cornerTR = createCornerDecoration("╗", 705, 135);
-        JLabel cornerBL = createCornerDecoration("╚", 80, 450);
-        JLabel cornerBR = createCornerDecoration("╝", 705, 450);
-        
-        add(cornerTL);
-        add(cornerTR);
-        add(cornerBL);
-        add(cornerBR);
-    }
-    
-    private JLabel createCornerDecoration(String symbol, int x, int y) {
-        JLabel corner = new JLabel(symbol);
-        corner.setBounds(x, y, 20, 20);
-        corner.setFont(new Font("Monospaced", Font.BOLD, 18));
-        corner.setForeground(ACCENT_COLOR);
-        return corner;
-    }
-
-    public void refreshWelcomeMessage() {
-        String username = mainApp.getCurrentUsername();
-        String displayName = (username == null || username.isEmpty()) ? "Guest" : username;
-        welcomeLabel.setText("Selamat datang, " + displayName);
+        generateNoiseTexture();
+        initComponents();
     }
     
     public void onPanelShown() {
-        refreshWelcomeMessage();
+        updateGreeting();
     }
     
-    private class ProfileListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            showProfileDialog();
+    // --- VISUAL BACKGROUND (Sama dengan Login) ---
+    private void generateNoiseTexture() {
+        noiseTexture = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = noiseTexture.createGraphics();
+        java.util.Random rand = new java.util.Random(12345);
+        for (int y = 0; y < 100; y++) {
+            for (int x = 0; x < 100; x++) {
+                int noise = rand.nextInt(80) - 40;
+                int gray = 128 + noise;
+                gray = Math.max(0, Math.min(255, gray));
+                int alpha = 20;
+                noiseTexture.setRGB(x, y, new Color(gray, gray, gray, alpha).getRGB());
+            }
         }
+        g.dispose();
     }
     
-    private void showProfileDialog() {
-        PlayerProfile currentProfile = mainApp.getCurrentProfile();
-        String currentCharacterName = currentProfile != null ? currentProfile.getCharacterName() : "";
-        String currentGender = currentProfile != null ? currentProfile.getGender() : "Laki-laki";
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
-        // Dialog profile
-        JDialog profileDialog = new JDialog();
-        profileDialog.setTitle("Edit Profile - Rengasdengklok 1945");
-        profileDialog.setModal(true);
-        profileDialog.setSize(500, 500); // Lebih besar
-        profileDialog.setLocationRelativeTo(this);
-        profileDialog.setLayout(new BorderLayout());
-        profileDialog.getContentPane().setBackground(DIALOG_BACKGROUND);
+        int w = getWidth(); int h = getHeight();
         
-        // Title 
-        JLabel titleLabel = new JLabel("Edit Profil Petualang", JLabel.CENTER);
-        titleLabel.setFont(new Font("Serif", Font.BOLD, 20));
-        titleLabel.setForeground(ACCENT_COLOR);
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        // Gradient Background
+        Color[] gradColors = { ColorPalette.DARK_BG_1, ColorPalette.DARK_BG_2, ColorPalette.DARK_BG_3 };
+        for (int y = 0; y < h; y++) {
+            float ratio = (float) y / h;
+            Color c1 = (ratio < 0.5f) ? gradColors[0] : gradColors[1];
+            Color c2 = (ratio < 0.5f) ? gradColors[1] : gradColors[2];
+            float localRatio = (ratio < 0.5f) ? ratio * 2 : (ratio - 0.5f) * 2;
+            int r = (int) (c1.getRed() + (c2.getRed() - c1.getRed()) * localRatio);
+            int gr = (int) (c1.getGreen() + (c2.getGreen() - c1.getGreen()) * localRatio);
+            int b = (int) (c1.getBlue() + (c2.getBlue() - c1.getBlue()) * localRatio);
+            g2d.setColor(new Color(r, gr, b));
+            g2d.fillRect(0, y, w, 1);
+        }
         
-        // Main content panel
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-        mainPanel.setBackground(DIALOG_BACKGROUND);
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(0, 30, 20, 30));
+        // Noise
+        for (int y = 0; y < h; y += 100) {
+            for (int x = 0; x < w; x += 100) {
+                g2d.drawImage(noiseTexture, x, y, null);
+            }
+        }
         
-        // Nama Character
-        JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        namePanel.setBackground(DIALOG_BACKGROUND);
-        JLabel nameLabel = new JLabel("Nama:");
-        nameLabel.setFont(new Font("Serif", Font.BOLD, 14));
-        nameLabel.setForeground(ACCENT_COLOR);
+        // Glow Effect
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.1f));
+        RadialGradientPaint glow = new RadialGradientPaint(w/2, h/2, w/2, new float[]{0f, 1f}, 
+            new Color[]{new Color(168, 106, 101, 255), new Color(168, 106, 101, 0)});
+        g2d.setPaint(glow);
+        g2d.fillOval(0, 0, w, h);
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+    }
+
+    // --- SUSUN KOMPONEN ---
+    private void initComponents() {
         
-        JTextField nameField = new JTextField(currentCharacterName, 20);
-        nameField.setFont(new Font("Serif", Font.PLAIN, 14));
-        nameField.setBackground(BACKGROUND_COLOR);
-        nameField.setForeground(ACCENT_COLOR);
+        // 1. Sapaan (Kapsul di Kiri Atas)
+        greetingPill = new GreetingPill("Selamat datang, Pejuang");
+        greetingPill.setBounds(40, 40, 250, 44);
+        add(greetingPill);
         
-        namePanel.add(nameLabel);
-        namePanel.add(nameField);
+        // 2. Tombol Bulat (Kanan Atas)
+        int topBtnY = 40;
         
-        // Gender 
-        JPanel genderPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        genderPanel.setBackground(DIALOG_BACKGROUND);
-        JLabel genderLabel = new JLabel("Jenis Kelamin:");
-        genderLabel.setFont(new Font("Serif", Font.BOLD, 14));
-        genderLabel.setForeground(TEXT_COLOR);
+        // Tombol Logout (Paling Kanan)
+        logoutButton = new CircleButton("↪"); // Icon panah keluar
+        logoutButton.setBounds(WINDOW_WIDTH - 40 - 44, topBtnY, 44, 44);
+        logoutButton.addActionListener(e -> mainApp.logout());
+        add(logoutButton);
         
-        // Variabel untuk track selection
-        final String[] selectedGender = new String[1];
-        selectedGender[0] = currentGender; // Default
+        // Tombol Mute (Sebelah kirinya)
+        muteButton = new CircleButton("🔊");
+        muteButton.setBounds(WINDOW_WIDTH - 40 - 44 - 16 - 44, topBtnY, 44, 44);
+        muteButton.addActionListener(e -> toggleMute());
+        add(muteButton);
         
-        // Panel radio button
-        JPanel radioPanel = new JPanel(new GridLayout(2, 1));
-        radioPanel.setBackground(DIALOG_BACKGROUND);
+        // 3. Judul & Ornamen (Tengah)
+        // Garis atas + Diamond
+        OrnamentalDivider dividerTop = new OrnamentalDivider();
+        dividerTop.setBounds((WINDOW_WIDTH - 300)/2, 130, 300, 10);
+        add(dividerTop);
         
-        JRadioButton maleRadio = new JRadioButton("Laki-laki");
-        JRadioButton femaleRadio = new JRadioButton("Perempuan");
+        JLabel titleLabel = new JLabel("Rengasdengklok", JLabel.CENTER);
+        titleLabel.setFont(new Font("Georgia", Font.BOLD, 64));
+        titleLabel.setForeground(ColorPalette.CHINA_DOLL);
+        titleLabel.setBounds(0, 150, WINDOW_WIDTH, 80);
+        add(titleLabel);
         
-        maleRadio.setFont(new Font("Serif", Font.PLAIN, 14));
-        femaleRadio.setFont(new Font("Serif", Font.PLAIN, 14));
-        maleRadio.setBackground(DIALOG_BACKGROUND);
-        femaleRadio.setBackground(DIALOG_BACKGROUND);
-        maleRadio.setForeground(TEXT_COLOR);
-        femaleRadio.setForeground(TEXT_COLOR);
+        // Garis bawah kecil
+        OrnamentalDivider dividerBottom = new OrnamentalDivider();
+        dividerBottom.setBounds((WINDOW_WIDTH - 50)/2, 235, 50, 10); // Diamond kecil di bawah judul
+        add(dividerBottom);
         
-        if ("Perempuan".equalsIgnoreCase(currentGender)) {
-            femaleRadio.setSelected(true);
-            maleRadio.setSelected(false);
-            selectedGender[0] = "Perempuan";
+        JLabel subtitleLabel = new JLabel("Jangan Salah Culik!", JLabel.CENTER);
+        subtitleLabel.setFont(new Font("Georgia", Font.PLAIN, 20));
+        subtitleLabel.setForeground(ColorPalette.ROSEWATER);
+        subtitleLabel.setBounds(0, 260, WINDOW_WIDTH, 30);
+        add(subtitleLabel);
+        
+        // 4. Tombol Menu Besar (Tengah Bawah)
+        int startY = 340;
+        int btnHeight = 85;
+        int btnWidth = 640;
+        int gap = 20;
+        int btnX = (WINDOW_WIDTH - btnWidth) / 2;
+        
+        storyButton = new MenuButton("Mode Cerita", "Ikuti perjalanan proklamasi kemerdekaan", "📖");
+        storyButton.setBounds(btnX, startY, btnWidth, btnHeight);
+        storyButton.addActionListener(e -> mainApp.startGame());
+        add(storyButton);
+        
+        quizButton = new MenuButton("Kuis Uji Pemahaman", "Uji pengetahuan sejarah Anda", "❓");
+        quizButton.setBounds(btnX, startY + btnHeight + gap, btnWidth, btnHeight);
+        quizButton.addActionListener(e -> mainApp.showQuizPanel());
+        add(quizButton);
+        
+        leaderboardButton = new MenuButton("Leaderboard", "Lihat peringkat pemain terbaik", "🏆");
+        leaderboardButton.setBounds(btnX, startY + (btnHeight + gap) * 2, btnWidth, btnHeight);
+        leaderboardButton.addActionListener(e -> mainApp.showLeaderboardPanel());
+        add(leaderboardButton);
+        
+        // 5. Footer
+        FooterPanel footer = new FooterPanel();
+        footer.setBounds(0, WINDOW_HEIGHT - 60, WINDOW_WIDTH, 40);
+        add(footer);
+    }
+    
+    private void updateGreeting() {
+        if (mainApp.getCurrentUser() != null && mainApp.getCurrentProfile() != null) {
+            String name = mainApp.getCurrentProfile().getCharacterName();
+            String gender = mainApp.getCurrentProfile().getGender();
+            String honorific = "Bung";
+            if (gender != null && (gender.equalsIgnoreCase("Female") || gender.equalsIgnoreCase("Perempuan"))) {
+                honorific = "Sus";
+            }
+            greetingPill.setText("Selamat datang, " + honorific + " " + name);
         } else {
-            maleRadio.setSelected(true);
-            femaleRadio.setSelected(false);
-            selectedGender[0] = "Laki-laki";
+            greetingPill.setText("Selamat datang, Pejuang");
         }
+        greetingPill.repaint();
+    }
+    
+    private void toggleMute() {
+        if (muteButton.getText().equals("🔊")) muteButton.setText("🔇");
+        else muteButton.setText("🔊");
+    }
+
+    // --- KOMPONEN KUSTOM SESUAI DESAIN ---
+
+    // 1. Kapsul Sapaan (Pojok Kiri Atas)
+    class GreetingPill extends JLabel {
+        public GreetingPill(String text) {
+            super(text, SwingConstants.CENTER);
+            setFont(new Font("SansSerif", Font.PLAIN, 13));
+            setForeground(ColorPalette.ROSEWATER);
+        }
+        public void setText(String text) { super.setText(text); }
+        @Override protected void paintComponent(Graphics g) {
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            // Background Kapsul Transparan
+            g2d.setColor(new Color(180, 140, 130, 60)); 
+            g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 44, 44);
+            super.paintComponent(g);
+        }
+    }
+
+    // 2. Tombol Bulat (Pojok Kanan Atas)
+    class CircleButton extends JButton {
+        public CircleButton(String text) {
+            super(text);
+            setContentAreaFilled(false); setBorderPainted(false); setFocusPainted(false);
+            setFont(new Font("SansSerif", Font.BOLD, 18));
+            setForeground(ColorPalette.CHINA_DOLL);
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+        }
+        @Override protected void paintComponent(Graphics g) {
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            // Lingkaran Background
+            g2d.setColor(new Color(180, 140, 130, 60));
+            g2d.fillOval(0, 0, getWidth(), getHeight());
+            super.paintComponent(g);
+        }
+    }
+    
+    // 3. Tombol Menu Besar (Kartu Kaca)
+    class MenuButton extends JButton {
+        private String title, subtitle, icon;
+        private boolean isHovered = false;
         
-        maleRadio.addActionListener(e -> {
-            maleRadio.setSelected(true);
-            femaleRadio.setSelected(false);
-            selectedGender[0] = "Laki-laki";
-            System.out.println("Selected: Laki-laki");
-        });
-        
-        femaleRadio.addActionListener(e -> {
-            femaleRadio.setSelected(true);
-            maleRadio.setSelected(false);
-            selectedGender[0] = "Perempuan";
-            System.out.println("Selected: Perempuan");
-        });
-        
-        radioPanel.add(maleRadio);
-        radioPanel.add(femaleRadio);
-        
-        genderPanel.add(genderLabel);
-        genderPanel.add(radioPanel);
-        
-        mainPanel.add(namePanel);
-        mainPanel.add(Box.createVerticalStrut(20));
-        mainPanel.add(genderPanel);
-        mainPanel.add(Box.createVerticalStrut(10));
-        
-        // Button panel
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
-        buttonPanel.setBackground(DIALOG_BACKGROUND);
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
-        
-        JButton saveButton = createDialogButton("Simpan");
-        JButton cancelButton = createDialogButton("Batal");
-        
-        saveButton.addActionListener(e -> {
-            String newCharacterName = nameField.getText().trim();
-            String newGender = selectedGender[0];
+        public MenuButton(String title, String subtitle, String icon) {
+            this.title = title; this.subtitle = subtitle; this.icon = icon;
+            setContentAreaFilled(false); setBorderPainted(false); setFocusPainted(false);
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
             
-            if (newCharacterName.isEmpty()) {
-                JOptionPane.showMessageDialog(profileDialog, 
-                    "Nama petualang tidak boleh kosong!", 
-                    "Peringatan", 
-                    JOptionPane.WARNING_MESSAGE);
-                return;
-            }
+            addMouseListener(new MouseAdapter() {
+                public void mouseEntered(MouseEvent e) { isHovered = true; repaint(); }
+                public void mouseExited(MouseEvent e) { isHovered = false; repaint(); }
+            });
+        }
+        
+        @Override protected void paintComponent(Graphics g) {
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             
-            boolean success = updateProfile(newCharacterName, newGender);
+            int w = getWidth(); int h = getHeight();
             
-            if (success) {
-                JOptionPane.showMessageDialog(profileDialog, 
-                    "Profil berhasil diperbarui!",
-                    "Sukses", 
-                    JOptionPane.INFORMATION_MESSAGE);
-                profileDialog.dispose();
-                refreshWelcomeMessage();
-            } else {
-                JOptionPane.showMessageDialog(profileDialog, 
-                    "Gagal memperbarui profil!", 
-                    "Error", 
-                    JOptionPane.ERROR_MESSAGE);
-            }
-        });
-        
-        cancelButton.addActionListener(e -> profileDialog.dispose());
-        
-        buttonPanel.add(saveButton);
-        buttonPanel.add(cancelButton);
-        
-        profileDialog.add(titleLabel, BorderLayout.NORTH);
-        profileDialog.add(mainPanel, BorderLayout.CENTER);
-        profileDialog.add(buttonPanel, BorderLayout.SOUTH);
-        
-        profileDialog.setVisible(true);
-    }
-    
-    private JButton createDialogButton(String text) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Serif", Font.BOLD, 14));
-        button.setBackground(BUTTON_BACKGROUND);
-        button.setForeground(ACCENT_COLOR);
-        button.setPreferredSize(new Dimension(100, 35));
-        button.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(ACCENT_COLOR, 2),
-            BorderFactory.createEmptyBorder(5, 15, 5, 15)
-        ));
-        
-        // Efek hover
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(ACCENT_COLOR);
-                button.setForeground(ACCENT_COLOR);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(BUTTON_BACKGROUND);
-                button.setForeground(ACCENT_COLOR);
-            }
-        });
-        
-        return button;
-    }
-    
-    private boolean updateProfile(String characterName, String gender) {
-        PlayerProfile currentProfile = mainApp.getCurrentProfile();
-        
-        if (currentProfile == null) {
-            return mainApp.getDbManager().createProfile(
-                mainApp.getCurrentUserId(), 
-                characterName, 
-                gender  
-            );
-        } else {
-            return mainApp.getDbManager().updateProfile(
-                mainApp.getCurrentUserId(), 
-                characterName, 
-                gender
-            );
+            // Background (Semi Transparan Merah/Coklat)
+            if (isHovered) g2d.setColor(new Color(168, 106, 101, 150)); // Lebih terang pas hover
+            else g2d.setColor(new Color(168, 106, 101, 100)); // Normal
+            
+            g2d.fillRoundRect(0, 0, w, h, 20, 20);
+            
+            // Border Tipis (Efek Kaca)
+            g2d.setColor(new Color(224, 203, 185, 100)); // China Doll pudar
+            g2d.setStroke(new BasicStroke(2f));
+            g2d.drawRoundRect(1, 1, w-3, h-3, 20, 20);
+            
+            // Ikon Kotak di Kiri
+            int iconSize = 50;
+            int iconX = 24;
+            int iconY = (h - iconSize) / 2;
+            
+            g2d.setColor(new Color(0,0,0,30)); // Bayangan kotak ikon
+            g2d.fillRoundRect(iconX, iconY, iconSize, iconSize, 12, 12);
+            g2d.setColor(new Color(224, 203, 185, 150)); // Border kotak ikon
+            g2d.setStroke(new BasicStroke(1.5f));
+            g2d.drawRoundRect(iconX, iconY, iconSize, iconSize, 12, 12);
+            
+            // Gambar Simbol Ikon
+            g2d.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+            g2d.setColor(ColorPalette.CHINA_DOLL);
+            g2d.drawString(icon, iconX + 12, iconY + 34);
+            
+            // Teks Judul
+            g2d.setFont(new Font("Georgia", Font.PLAIN, 26));
+            g2d.setColor(ColorPalette.CHINA_DOLL);
+            g2d.drawString(title, 90, 40);
+            
+            // Teks Deskripsi
+            g2d.setFont(new Font("SansSerif", Font.PLAIN, 13));
+            g2d.setColor(new Color(224, 203, 185, 180)); // Agak pudar
+            g2d.drawString(subtitle, 90, 65);
+            
+            // Panah di Kanan ->
+            g2d.setFont(new Font("SansSerif", Font.PLAIN, 24));
+            g2d.setColor(ColorPalette.CHINA_DOLL);
+            g2d.drawString("→", w - 50, h/2 + 8);
         }
     }
     
-    private class StartGameListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            mainApp.startGame();
+    // Garis Hiasan
+    class OrnamentalDivider extends JPanel {
+        public OrnamentalDivider() { setOpaque(false); }
+        @Override protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int w = getWidth(); int cx = w/2; int cy = getHeight()/2;
+            
+            g2d.setColor(new Color(168, 106, 101, 100)); // Garis pudar
+            g2d.drawLine(0, cy, w, cy);
+            
+            g2d.setColor(ColorPalette.COPPER_ROSE); // Wajik tengah
+            int s = 5;
+            int[] x = {cx, cx+s, cx, cx-s};
+            int[] y = {cy-s, cy, cy+s, cy};
+            g2d.fillPolygon(x, y, 4);
         }
     }
     
-    private class QuizListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            mainApp.showQuizPanel();
-        }
-    }
-    
-    private class LeaderboardListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            mainApp.showLeaderboardPanel();
-        }
-    }
-    
-    private class LogoutListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            mainApp.logout();
+    // Footer
+    class FooterPanel extends JPanel {
+        public FooterPanel() { setOpaque(false); }
+        @Override protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int w = getWidth(); int h = getHeight();
+            
+            g2d.setColor(new Color(168, 106, 101, 80));
+            g2d.drawLine(w/2 - 150, h/2, w/2 - 250, h/2);
+            g2d.drawLine(w/2 + 150, h/2, w/2 + 250, h/2);
+            
+            g2d.setFont(new Font("Georgia", Font.PLAIN, 12));
+            g2d.setColor(new Color(168, 106, 101)); // Warna agak gelap dikit
+            String text = "Indonesia Merdeka • 1945";
+            int tw = g2d.getFontMetrics().stringWidth(text);
+            g2d.drawString(text, (w - tw)/2, h/2 + 5);
         }
     }
 }

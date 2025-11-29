@@ -54,7 +54,7 @@ public class RengasdengklokGame {
     private void initializeFrame() {
         frame = new JFrame("Rengasdengklok: Jangan Salah Culik!");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(800, 600);
+        frame.setSize(1024, 768);
         frame.setLocationRelativeTo(null);
         frame.setResizable(false);
 
