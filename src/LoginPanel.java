@@ -147,7 +147,7 @@ public class LoginPanel extends JPanel {
         add(footer);
     }
     
-    //--- LOGIKA PAS TOMBOL MASUK/DAFTAR DIKLIK ---
+    //LOGIKA PAS TOMBOL MASUK/DAFTAR DIKLIK 
     private void handleSubmit() {
         String username = usernameField.getText().trim();
         String password = new String(passwordField.getPassword()).trim();
