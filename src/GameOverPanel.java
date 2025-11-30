@@ -486,7 +486,7 @@ public class GameOverPanel extends JPanel {
             g2d.setPaint(gp);
             g2d.fillRoundRect(0, 0, w, h, 20, 20);
 
-            //highlight lembut di bagian atas tombol
+            //highlight lembut di bagian atas tomboll
             GradientPaint shine = new GradientPaint(
                 0, 0, new Color(255, 255, 255, 40),
                 0, h / 2, new Color(255, 255, 255, 0)

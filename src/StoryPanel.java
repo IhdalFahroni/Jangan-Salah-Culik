@@ -531,7 +531,7 @@ public class StoryPanel extends JPanel {
         }
     }
 
-    //panel untuk menampilkan potret tokoh yang sedang muncul di scene
+    //panel untuk menampilkan potret tokoh yang sedang muncul di scenee
     class CharacterDisplayPanel extends JPanel {
 
         //list karakter dari scene sekarang

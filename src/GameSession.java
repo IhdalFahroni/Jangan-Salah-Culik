@@ -201,7 +201,7 @@ public class GameSession {
         moveToNextScene(decisionCode);
         saveProgress();
 
-        // Update UI jika UIManager tersedia
+        // Update UI jika UIManager tersediaa
         if (uiManager != null) {
             uiManager.updateUI();
         }

@@ -15,7 +15,7 @@ public class UIManager {
         this.uiComponents = new HashMap<>();
     }
 
-    //hubungkan storyPanel dengan uiManager
+    //hubungkan storyPanel dengan uiManagerr
     public void setStoryPanel(StoryPanel storyPanel) {
         this.storyPanel = storyPanel;
         if (storyPanel != null) {
@@ -172,6 +172,6 @@ public class UIManager {
 
     public void setUiComponents(Map<String, Object> uiComponents) 
     { this.uiComponents = uiComponents; 
-        
+
     }
 }
