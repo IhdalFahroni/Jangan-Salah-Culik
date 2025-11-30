@@ -190,8 +190,15 @@ public class GameSession {
         // pindah ke scene selanjutnya berdasarkan decision atau sequential (emg ud
         // waktux pindah)
         persistDecision(sceneBeforeDecision, selectedChoice, decisionCode, decisionText);
+        // HITUNG ENDING KHUSUS SCENE 9
+        if (currentScene == 9) {
+            endingAchieved = calculateEnding();
+            if (endingAchieved != null && !endingAchieved.isEmpty()) {
+                handleGameCompletion();
+                return;
+            }
+        }
         moveToNextScene(decisionCode);
-
         saveProgress();
 
         // Update UI jika UIManager tersedia
@@ -277,7 +284,7 @@ public class GameSession {
             uiManager.showDecisionTimer(30);
             uiManager.updateUI();
         }
-        if (currentScene >= 9) {
+        if (currentScene > 9) {
             endingAchieved = calculateEnding();
             if (endingAchieved != null && !endingAchieved.isEmpty()) {
                 handleGameCompletion();

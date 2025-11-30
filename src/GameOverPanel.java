@@ -1,144 +1,505 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
+import java.awt.geom.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.Map;
+import java.util.Random;
+import javax.imageio.ImageIO;
 
+//kelas untuk panel tampilan game over
 public class GameOverPanel extends JPanel {
+
+    //label judul, subjudul, dan deskripsi ending
     private JLabel endingTitleLabel;
-    private JTextArea endingDescriptionArea;
-    private JLabel soekarnoLabel;
-    private JLabel hattaLabel;
-    private JLabel trustLabel;
-    private JLabel pemudaLabel;
-    private JButton mainMenuButton;
-    private JButton replayButton;
+    private JLabel endingSubtitleLabel;
+    private JLabel endingDescriptionLabel;
+
+    //komponen statistik akhir
+    private StatsBox statsBox;
+
+    //aksi saat player klik replay atau kembali ke menu
     private Runnable onReturnToMenu;
     private Runnable onReplay;
 
+    //texture noise dan background gambar
+    private BufferedImage noiseTexture;
+    private BufferedImage bgImage;
+
+    //data ending yang akan ditampilkan
+    private String endingKey = "UNKNOWN";
+    private Map<String, Integer> finalStats;
+
+    //konstruktor panel game over
     public GameOverPanel() {
-        setLayout(new BorderLayout(16, 16));
-        setBackground(new Color(0xF5, 0xED, 0xE0));
-        buildHeader();
-        buildCenter();
-        buildFooter();
+        setLayout(null); //pakai layout manual biar bisa atur posisi bebas
+        setBackground(ColorPalette.DARK_BG_1); //warna dasar panel
+        setPreferredSize(new Dimension(1024, 768)); //ukuran panel standar
+
+        loadBackground();      //muat background gambar
+        generateNoiseTexture(); //buat texture noise
+        initComponents();       //inisialisasi semua komponen ui
     }
 
-    private void buildHeader() {
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setOpaque(false);
-
-        JLabel titleLabel = new JLabel("Perjalanan Usai", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Serif", Font.BOLD, 28));
-        titleLabel.setForeground(new Color(0x8B, 0x45, 0x1E));
-
-        endingTitleLabel = new JLabel("ENDING", SwingConstants.CENTER);
-        endingTitleLabel.setFont(new Font("Serif", Font.BOLD, 22));
-        endingTitleLabel.setForeground(new Color(0x5D, 0x30, 0x3C));
-
-        headerPanel.add(titleLabel, BorderLayout.NORTH);
-        headerPanel.add(endingTitleLabel, BorderLayout.SOUTH);
-        add(headerPanel, BorderLayout.NORTH);
-    }
-
-    private void buildCenter() {
-        JPanel centerPanel = new JPanel(new BorderLayout(10, 10));
-        centerPanel.setOpaque(false);
-
-        endingDescriptionArea = new JTextArea();
-        endingDescriptionArea.setEditable(false);
-        endingDescriptionArea.setWrapStyleWord(true);
-        endingDescriptionArea.setLineWrap(true);
-        endingDescriptionArea.setFont(new Font("Serif", Font.PLAIN, 16));
-        endingDescriptionArea.setBackground(new Color(0xFA, 0xF3, 0xE8));
-        endingDescriptionArea.setForeground(new Color(0x3A, 0x1F, 0x24));
-        endingDescriptionArea.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0x8B, 0x45, 0x1E)),
-                BorderFactory.createEmptyBorder(12, 12, 12, 12)));
-
-        centerPanel.add(new JScrollPane(endingDescriptionArea), BorderLayout.CENTER);
-
-        JPanel statsPanel = new JPanel(new GridLayout(2, 2, 8, 8));
-        statsPanel.setOpaque(false);
-
-        soekarnoLabel = createStatLabel("Soekarno", 50);
-        hattaLabel = createStatLabel("Hatta", 50);
-        trustLabel = createStatLabel("Trust", 50);
-        pemudaLabel = createStatLabel("Pemuda", 50);
-
-        statsPanel.add(soekarnoLabel);
-        statsPanel.add(hattaLabel);
-        statsPanel.add(trustLabel);
-        statsPanel.add(pemudaLabel);
-
-        centerPanel.add(statsPanel, BorderLayout.SOUTH);
-        add(centerPanel, BorderLayout.CENTER);
-    }
-
-    private void buildFooter() {
-        JPanel footerPanel = new JPanel();
-        footerPanel.setOpaque(false);
-
-        mainMenuButton = new JButton("Kembali ke Menu");
-        mainMenuButton.setFont(new Font("Serif", Font.BOLD, 16));
-        mainMenuButton.setBackground(new Color(0xA0, 0x6C, 0x4F));
-        mainMenuButton.setForeground(Color.WHITE);
-        mainMenuButton.setFocusPainted(false);
-        mainMenuButton.addActionListener(e -> {
-            if (onReturnToMenu != null) {
-                onReturnToMenu.run();
+    //fungsi untuk memuat gambar background scene terakhir
+    private void loadBackground() {
+        try {
+            File imgFile = new File("assets/Background/scene9.png");
+            if (imgFile.exists()) {
+                bgImage = ImageIO.read(imgFile); //set gambar background
             }
-        });
+        } catch (Exception e) {
+            System.err.println("Gagal memuat background game over: " + e.getMessage());
+        }
+    }
 
-        replayButton = new JButton("Main Lagi");
-        replayButton.setFont(new Font("Serif", Font.BOLD, 16));
-        replayButton.setBackground(new Color(0x8B, 0x45, 0x1E));
-        replayButton.setForeground(Color.WHITE);
-        replayButton.setFocusPainted(false);
-        replayButton.addActionListener(e -> {
-            if (onReplay != null) {
-                onReplay.run();
+    //fungsi untuk bikin texture noise biar background punya efek grain halus
+    private void generateNoiseTexture() {
+        noiseTexture = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = noiseTexture.createGraphics();
+        Random rand = new Random(12345);
+
+        //loop buat generate titik noise random
+        for (int y = 0; y < 100; y++) {
+            for (int x = 0; x < 100; x++) {
+
+                int noise = rand.nextInt(80) - 40; //nilai random -40 sampai +40
+                int gray = 128 + noise;            //warna dasar abu dengan noise
+                gray = Math.max(0, Math.min(255, gray)); //clamp biar aman
+
+                int alpha = 15; //opacity rendah biar noise halus
+                noiseTexture.setRGB(x, y, new Color(gray, gray, gray, alpha).getRGB());
             }
+        }
+
+        g.dispose(); //hapus resource g
+    }
+
+        @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        int w = getWidth();
+        int h = getHeight();
+
+        //gambar background utama
+        if (bgImage != null) {
+            g2d.drawImage(bgImage, 0, 0, w, h, null);
+
+            //overlay gelap biar efek kayak modal popup
+            GradientPaint darkOverlay = new GradientPaint(
+                0, 0, new Color(50, 30, 30, 220),
+                0, h, new Color(20, 10, 10, 250)
+            );
+            g2d.setPaint(darkOverlay);
+            g2d.fillRect(0, 0, w, h);
+
+        } else {
+            //fallback gradient kalau gambar background ga ketemu
+            GradientPaint bgGradient = new GradientPaint(
+                0, 0, new Color(60, 40, 40),
+                0, h, new Color(30, 20, 20)
+            );
+            g2d.setPaint(bgGradient);
+            g2d.fillRect(0, 0, w, h);
+        }
+
+        //gambar noise halus di atas background
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+        TexturePaint noisePaint = new TexturePaint(noiseTexture, new Rectangle(0, 0, 100, 100));
+        g2d.setPaint(noisePaint);
+        g2d.fillRect(0, 0, w, h);
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+
+        //==== gambar kotak modal utama di tengah layar ====
+
+        int mw = 700;   //lebar modal
+        int mh = 600;   //tinggi modal
+        int mx = (w - mw) / 2; //posisi horizontal center
+        int my = (h - mh) / 2; //posisi vertikal center
+
+        //background modal warna plum wine gelap
+        g2d.setColor(new Color(40, 25, 25, 240));
+        g2d.fillRoundRect(mx, my, mw, mh, 30, 30);
+
+        //border modal warna copper rose sedikit transparan
+        g2d.setColor(new Color(168, 106, 101, 80));
+        g2d.setStroke(new BasicStroke(1f));
+        g2d.drawRoundRect(mx, my, mw, mh, 30, 30);
+
+        //==== dekorasi sudut modal (hiasan garis bentuk L) ====
+
+        int cl = 40; //panjang dekorasi
+        int co = 25; //offset jarak dari tepi modal
+
+        g2d.setColor(new Color(140, 90, 85)); //warna copper rose gelap
+        g2d.setStroke(new BasicStroke(3f));
+
+        //kiri atas
+        g2d.drawPolyline(
+            new int[]{mx + co, mx + co, mx + co + cl},
+            new int[]{my + co + cl, my + co, my + co},
+            3
+        );
+
+        //kanan atas
+        g2d.drawPolyline(
+            new int[]{mx + mw - co - cl, mx + mw - co, mx + mw - co},
+            new int[]{my + co, my + co, my + co + cl},
+            3
+        );
+
+        //kiri bawah
+        g2d.drawPolyline(
+            new int[]{mx + co, mx + co, mx + co + cl},
+            new int[]{my + mh - co - cl, my + mh - co, my + mh - co},
+            3
+        );
+
+        //kanan bawah
+        g2d.drawPolyline(
+            new int[]{mx + mw - co - cl, mx + mw - co, mx + mw - co},
+            new int[]{my + mh - co, my + mh - co, my + mh - co - cl},
+            3
+        );
+    }
+
+        //fungsi untuk membuat semua komponen dalam modal game over
+    private void initComponents() {
+        int w = 1024;  //lebar default panel
+        int h = 768;   //tinggi default panel
+        int modalY = (h - 600) / 2; //posisi modal di tengah vertikal
+
+        //ikon jam dekoratif di atas judul
+        ClockIcon clock = new ClockIcon();
+        clock.setBounds((w - 60) / 2, modalY + 50, 60, 60);
+        add(clock);
+
+        //label judul ending (besar)
+        endingTitleLabel = new JLabel("JUDUL ENDING", SwingConstants.CENTER);
+        endingTitleLabel.setFont(new Font("Georgia", Font.BOLD, 42));
+        endingTitleLabel.setForeground(ColorPalette.CHINA_DOLL);
+        endingTitleLabel.setBounds(0, modalY + 130, w, 50);
+        add(endingTitleLabel);
+
+        //label jenis ending (bad ending / good ending / true ending)
+        endingSubtitleLabel = new JLabel("BAD ENDING 1", SwingConstants.CENTER);
+        endingSubtitleLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+        endingSubtitleLabel.setForeground(ColorPalette.COPPER_ROSE);
+        endingSubtitleLabel.setBounds(0, modalY + 180, w, 20);
+        add(endingSubtitleLabel);
+
+        //pembatas bentuk diamond di tengah
+        DiamondDivider divider = new DiamondDivider();
+        divider.setBounds((w - 20) / 2, modalY + 210, 20, 20);
+        add(divider);
+
+        //deskripsi ending dalam teks html
+        endingDescriptionLabel = new JLabel("", SwingConstants.CENTER);
+        endingDescriptionLabel.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        endingDescriptionLabel.setForeground(new Color(220, 210, 200));
+        endingDescriptionLabel.setBounds((w - 600) / 2, modalY + 240, 600, 80);
+        add(endingDescriptionLabel);
+
+        //kotak statistik akhir hubungan player
+        statsBox = new StatsBox();
+        statsBox.setBounds((w - 500) / 2, modalY + 340, 500, 40);
+        add(statsBox);
+
+        //lebar dan tinggi tombol
+        int btnW = 320;
+        int btnH = 55;
+        int btnX = (w - btnW) / 2;
+
+        //tombol untuk replay / mulai ulang cerita
+        DarkRoseButton replayBtn = new DarkRoseButton("↻ Mulai Ulang Cerita");
+        replayBtn.setBounds(btnX, modalY + 410, btnW, btnH);
+        replayBtn.addActionListener(e -> {
+            if (onReplay != null) onReplay.run(); //jalankan aksi yang dikirim dari luar
         });
+        add(replayBtn);
 
-        footerPanel.add(mainMenuButton);
-        footerPanel.add(replayButton);
-        add(footerPanel, BorderLayout.SOUTH);
+        //tombol untuk kembali ke menu utama
+        DarkRoseButton menuBtn = new DarkRoseButton("⌂ Kembali ke Menu Utama");
+        menuBtn.setBounds(btnX, modalY + 480, btnW, btnH);
+        menuBtn.addActionListener(e -> {
+            if (onReturnToMenu != null) onReturnToMenu.run();
+        });
+        add(menuBtn);
+
+        //tanggal dekoratif di bagian bawah modal
+        JLabel dateLabel = new JLabel("17 Agustus 1945", SwingConstants.CENTER);
+        dateLabel.setFont(new Font("Georgia", Font.ITALIC, 12));
+        dateLabel.setForeground(new Color(160, 130, 120));
+        dateLabel.setBounds(0, modalY + 550, w, 20);
+        add(dateLabel);
     }
 
-    private JLabel createStatLabel(String name, int value) {
-        JLabel label = new JLabel(formatStat(name, value));
-        label.setFont(new Font("Serif", Font.BOLD, 14));
-        label.setForeground(new Color(0x5D, 0x30, 0x3C));
-        return label;
-    }
-
-    private String formatStat(String label, int value) {
-        return String.format("%s: %d", label, value);
-    }
-
+    //fungsi untuk update data ending berdasarkan key dan relasi player
     public void setEndingInfo(String endingKey, String description, Map<String, Integer> relationships) {
-        endingTitleLabel.setText(formatEndingTitle(endingKey));
-        endingDescriptionArea.setText(description != null ? description : "");
-        endingDescriptionArea.setCaretPosition(0);
-        if (relationships != null) {
-            soekarnoLabel.setText(formatStat("Soekarno", relationships.getOrDefault("SOEKARNO", 50)));
-            hattaLabel.setText(formatStat("Hatta", relationships.getOrDefault("HATTA", 50)));
-            trustLabel.setText(formatStat("Trust", relationships.getOrDefault("TRUST", 50)));
-            pemudaLabel.setText(formatStat("Pemuda", relationships.getOrDefault("PEMUDA", 50)));
+        this.endingKey = endingKey;
+        this.finalStats = relationships;
+
+        //default value sebelum dicek jenis ending
+        String titleText = "Perjuangan Berakhir";
+        String typeText = "ENDING";
+        Color titleColor = ColorPalette.CHINA_DOLL;
+
+        //cek apakah ending ini true ending
+        if (endingKey.contains("TRUE")) {
+            titleText = "Indonesia Merdeka";
+            typeText = "TRUE ENDING";
+            titleColor = new Color(220, 200, 150);
         }
+        //cek apakah good ending
+        else if (endingKey.contains("GOOD")) {
+            titleText = "Kemerdekaan Tegang";
+            typeText = "GOOD ENDING";
+            titleColor = new Color(180, 200, 220);
+        }
+        //kalau bukan keduanya berarti bad ending
+        else {
+            String[] parts = endingKey.split("_");
+            if (parts.length >= 3) {
+                //ambil kata dari key untuk dijadikan judul bad ending
+                StringBuilder sb = new StringBuilder();
+                for (int i = 2; i < parts.length; i++) {
+                    sb.append(parts[i]).append(" ");
+                }
+                titleText = sb.toString().trim();
+                titleText = titleText.substring(0, 1).toUpperCase()
+                           + titleText.substring(1).toLowerCase();
+            }
+
+            typeText = "BAD ENDING";
+            titleColor = new Color(220, 150, 150);
+        }
+
+        //update label setelah ditentukan jenis ending
+        endingTitleLabel.setText(titleText);
+        endingTitleLabel.setForeground(titleColor);
+
+        endingSubtitleLabel.setText(typeText);
+
+        //pakai html biar teks bisa center dan wrap
+        endingDescriptionLabel.setText(
+            "<html><div style='text-align: center;'>" + description + "</div></html>"
+        );
+
+        repaint(); //refresh ui
     }
 
-    private String formatEndingTitle(String endingKey) {
-        if (endingKey == null || endingKey.isEmpty()) {
-            return "ENDING TIDAK DIKETAHUI";
-        }
-        return endingKey.replace('_', ' ');
-    }
-
+    //setter untuk aksi kembali ke menu
     public void setOnReturnToMenu(Runnable onReturnToMenu) {
         this.onReturnToMenu = onReturnToMenu;
     }
 
+    //setter untuk aksi replay
     public void setOnReplay(Runnable onReplay) {
         this.onReplay = onReplay;
+    }
+
+        //kelas untuk menampilkan statistik akhir hubungan (soekarno, hatta, pemuda, trust)
+    class StatsBox extends JPanel {
+
+        public StatsBox() {
+            setOpaque(false); //panel transparan agar hanya kotaknya yang terlihat
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            //kalau finalStats belum diisi, jangan gambar apa-apa
+            if (finalStats == null) return;
+
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(
+                RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON
+            );
+
+            int w = getWidth();
+            int h = getHeight();
+
+            //background kotak statistik warna gelap
+            g2d.setColor(new Color(50, 35, 35, 200));
+            g2d.fillRoundRect(0, 0, w, h, h, h);
+
+            //border kotak warna copper rose
+            g2d.setColor(new Color(140, 90, 85));
+            g2d.setStroke(new BasicStroke(1f));
+            g2d.drawRoundRect(0, 0, w - 1, h - 1, h, h);
+
+            //font untuk teks statistik
+            g2d.setFont(new Font("SansSerif", Font.PLAIN, 13));
+            g2d.setColor(ColorPalette.CHINA_DOLL);
+
+            //format teks statistik
+            String s =
+                "Soekarno: " + finalStats.getOrDefault("SOEKARNO", 50) +
+                " | Hatta: " + finalStats.getOrDefault("HATTA", 50) +
+                " | Pemuda: " + finalStats.getOrDefault("PEMUDA", 50) +
+                " | Trust: "  + finalStats.getOrDefault("TRUST", 50);
+
+            //biar teks di tengah kotak
+            FontMetrics fm = g2d.getFontMetrics();
+            int textX = (w - fm.stringWidth(s)) / 2;
+            int textY = (h + fm.getAscent()) / 2 - 2;
+
+            g2d.drawString(s, textX, textY);
+        }
+    }
+
+        //kelas untuk ikon jam kecil sebagai dekorasi di atas judul ending
+    class ClockIcon extends JPanel {
+
+        public ClockIcon() {
+            setOpaque(false); //biar background panel transparan
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(
+                RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON
+            );
+
+            int w = getWidth();
+            int h = getHeight();
+
+            int cx = w / 2; //titik tengah x
+            int cy = h / 2; //titik tengah y
+            int r  = 28;    //radius jam
+
+            //lingkaran jam warna gelap
+            g2d.setColor(new Color(70, 50, 50));
+            g2d.fillOval(cx - r, cy - r, r * 2, r * 2);
+
+            //border jam warna copper rose muda
+            g2d.setColor(new Color(160, 110, 100));
+            g2d.setStroke(new BasicStroke(2f));
+            g2d.drawOval(cx - r, cy - r, r * 2, r * 2);
+
+            //jarum jam pendek dan panjang (posisi static untuk dekorasi)
+            g2d.drawLine(cx, cy, cx,     cy - 14); //jarum menit
+            g2d.drawLine(cx, cy, cx + 10, cy);     //jarum jam
+        }
+    }
+
+        //kelas untuk divider kecil bentuk diamond yang jadi pemisah antara judul dan deskripsi ending
+    class DiamondDivider extends JPanel {
+
+        public DiamondDivider() {
+            setOpaque(false); //panel transparan biar cuma bentuk diamondnya aja yang terlihat
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(
+                RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON
+            );
+
+            int cx = getWidth() / 2;  //titik tengah x panel
+            int cy = getHeight() / 2; //titik tengah y panel
+
+            //warna tembaga gelap biar nyatu sama tema UI
+            g2d.setColor(new Color(160, 110, 100));
+
+            //empat titik untuk bentuk diamond (ketupat)
+            int[] x = {cx, cx + 6, cx, cx - 6};
+            int[] y = {cy - 6, cy, cy + 6, cy};
+
+            //gambar diamond
+            g2d.fillPolygon(x, y, 4);
+        }
+    }
+
+        //kelas untuk tombol gaya rose gelap yang dipakai di bagian game over
+    class DarkRoseButton extends JButton {
+
+        private boolean hover = false; //status hover buat ganti warna saat cursor di atas tombol
+
+        public DarkRoseButton(String text) {
+            super(text);
+
+            setContentAreaFilled(false); //matikan background default tombol swing
+            setFocusPainted(false);       //hapus garis fokus biru default
+            setBorderPainted(false);      //border digambar manual di paintComponent
+            setFont(new Font("SansSerif", Font.BOLD, 16)); //font tebal biar lebih jelas
+            setForeground(ColorPalette.CHINA_DOLL);        //warna teks rose muda
+            setCursor(new Cursor(Cursor.HAND_CURSOR));     //biar cursor berubah tangan
+
+            //event hover untuk efek glow ringan
+            addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent e) {
+                    hover = true; //ubah status hover
+                    repaint();    //redraw biar warna berubah
+                }
+                public void mouseExited(java.awt.event.MouseEvent e) {
+                    hover = false;
+                    repaint();
+                }
+            });
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(
+                RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON
+            );
+
+            int w = getWidth();
+            int h = getHeight();
+
+            //gradient warnanya berubah sedikit saat hover
+            GradientPaint gp;
+
+            if (hover) {
+                //warna saat hover: lebih terang sedikit biar keliatan aktif
+                gp = new GradientPaint(
+                    0, 0, new Color(180, 120, 115, 240),
+                    w, h, new Color(160, 100, 95, 240)
+                );
+            } else {
+                //warna normal: rose gelap ke tembaga tua
+                gp = new GradientPaint(
+                    0, 0, new Color(160, 100, 95, 230),
+                    w, h, new Color(140, 80, 75, 230)
+                );
+            }
+
+            //gambar background tombol
+            g2d.setPaint(gp);
+            g2d.fillRoundRect(0, 0, w, h, 20, 20);
+
+            //highlight lembut di bagian atas tombol
+            GradientPaint shine = new GradientPaint(
+                0, 0, new Color(255, 255, 255, 40),
+                0, h / 2, new Color(255, 255, 255, 0)
+            );
+            g2d.setPaint(shine);
+            g2d.fillRoundRect(0, 0, w, h / 2, 20, 20);
+
+            //border luar tombol (plum wine gelap)
+            g2d.setColor(new Color(100, 60, 60, 200));
+            g2d.setStroke(new BasicStroke(1.5f));
+            g2d.drawRoundRect(1, 1, w - 2, h - 2, 20, 20);
+
+            super.paintComponent(g);
+        }
     }
 }

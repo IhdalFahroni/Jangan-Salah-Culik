@@ -4,246 +4,341 @@ import java.awt.event.*;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 
+//panel utama untuk halaman menu setelah user login
 public class MainMenuPanel extends JPanel {
     
-    private RengasdengklokGame mainApp;
-    
-    // Komponen visual
+    private RengasdengklokGame mainApp; //referensi ke aplikasi utama
+
+    //komponen visual yang tampil di menu
     private MenuButton storyButton, quizButton, leaderboardButton;
     private IconButton logoutButton;
     private GreetingPill greetingPill;
-    private BufferedImage noiseTexture;
-    
+
+    private BufferedImage noiseTexture; //tekstur bintik untuk background
+
+    //ukuran panel mengikuti ukuran window utama
     private static final int WINDOW_WIDTH = 1024;
     private static final int WINDOW_HEIGHT = 768;
-    
+
+    //constructor dipanggil pas panel menu dibuat
     public MainMenuPanel(RengasdengklokGame mainApp) {
         this.mainApp = mainApp;
-        setLayout(null);
+
+        setLayout(null); //pakai absolute layout biar bebas atur posisi
         setBackground(ColorPalette.DARK_BG_1);
         setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
-        
-        generateNoiseTexture();
-        initComponents();
+
+        generateNoiseTexture(); //bikin tekstur bintik untuk background
+        initComponents();       //atur semua tombol dan tulisan
     }
-    
+
+    //dipanggil setiap kali panel dibuka untuk update sapaan user
     public void onPanelShown() {
         updateGreeting();
     }
-    
-    //--- VISUAL BACKGROUND ---
+
+    //buat tekstur noise (bintik-bintik lembut) untuk efek vintage
     private void generateNoiseTexture() {
         noiseTexture = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB);
+
         Graphics2D g = noiseTexture.createGraphics();
         java.util.Random rand = new java.util.Random(12345);
+
         for (int y = 0; y < 100; y++) {
             for (int x = 0; x < 100; x++) {
+
+                //random noise dari -40 sampai 40
                 int noise = rand.nextInt(80) - 40;
+
                 int gray = 128 + noise;
-                gray = Math.max(0, Math.min(255, gray));
-                int alpha = 20;
-                noiseTexture.setRGB(x, y, new Color(gray, gray, gray, alpha).getRGB());
+                gray = Math.max(0, Math.min(255, gray)); //jaga biar tetap valid
+
+                int alpha = 20; //transparansi tipis
+
+                noiseTexture.setRGB(
+                    x, y,
+                    new Color(gray, gray, gray, alpha).getRGB()
+                );
             }
         }
         g.dispose();
     }
-    
-    @Override
+
+        @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+
         Graphics2D g2d = (Graphics2D) g;
+        //aktifkan antialiasing biar visual lebih halus
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
-        int w = getWidth(); int h = getHeight();
-        
-        Color[] gradColors = { ColorPalette.DARK_BG_1, ColorPalette.DARK_BG_2, ColorPalette.DARK_BG_3 };
+
+        int w = getWidth();
+        int h = getHeight();
+
+        //gradient background dari warna gelap 1 → 2 → 3
+        Color[] gradColors = {
+            ColorPalette.DARK_BG_1,
+            ColorPalette.DARK_BG_2,
+            ColorPalette.DARK_BG_3
+        };
+
+        //gambar gradient vertical manual baris per baris
         for (int y = 0; y < h; y++) {
             float ratio = (float) y / h;
+
+            //tentukan dua warna pembentuk gradient lokal
             Color c1 = (ratio < 0.5f) ? gradColors[0] : gradColors[1];
             Color c2 = (ratio < 0.5f) ? gradColors[1] : gradColors[2];
+
+            //hitungan rasio dalam sub-gradient
             float localRatio = (ratio < 0.5f) ? ratio * 2 : (ratio - 0.5f) * 2;
-            int r = (int) (c1.getRed() + (c2.getRed() - c1.getRed()) * localRatio);
-            int gr = (int) (c1.getGreen() + (c2.getGreen() - c1.getGreen()) * localRatio);
-            int b = (int) (c1.getBlue() + (c2.getBlue() - c1.getBlue()) * localRatio);
+
+            //hitung warna final gradient
+            int r = (int) (c1.getRed()   + (c2.getRed()   - c1.getRed())   * localRatio);
+            int gr= (int) (c1.getGreen() + (c2.getGreen() - c1.getGreen()) * localRatio);
+            int b = (int) (c1.getBlue()  + (c2.getBlue()  - c1.getBlue())  * localRatio);
+
             g2d.setColor(new Color(r, gr, b));
             g2d.fillRect(0, y, w, 1);
         }
-        
+
+        //tempel noise texture berulang di seluruh layar
         for (int y = 0; y < h; y += 100) {
             for (int x = 0; x < w; x += 100) {
                 g2d.drawImage(noiseTexture, x, y, null);
             }
         }
-        
+
+        //efek glow radial merah lembut di tengah layar
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.1f));
-        RadialGradientPaint glow = new RadialGradientPaint(w/2, h/2, w/2, new float[]{0f, 1f}, 
-            new Color[]{new Color(168, 106, 101, 255), new Color(168, 106, 101, 0)});
+
+        RadialGradientPaint glow = new RadialGradientPaint(
+            w / 2, h / 2,          //titik pusat glow
+            w / 2,                 //radius glow
+            new float[]{0f, 1f},   //rasio gradient
+            new Color[]{
+                new Color(168,106,101,255), //merah tua
+                new Color(168,106,101,0)    //transparan
+            }
+        );
+
         g2d.setPaint(glow);
         g2d.fillOval(0, 0, w, h);
+
+        //balikin opacity ke normal
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
     }
 
-    // --- SUSUN KOMPONEN ---
+        //atur posisi semua komponen menu ke layar
     private void initComponents() {
-        
-        // 1. Sapaan (Kiri Atas)
+
+        //sapaan user di kiri atas
         greetingPill = new GreetingPill("Selamat datang, Pejuang");
         greetingPill.setBounds(32, 32, 280, 48);
         add(greetingPill);
-        
-        // 2. Tombol Bulat Kanan Atas
+
+        //tombol logout di kanan atas
         int iconBtnSize = 56;
         int iconBtnY = 32;
         int iconBtnRightMargin = 32;
-        
+
         logoutButton = new IconButton(IconButtonType.LOGOUT);
-        logoutButton.setBounds(WINDOW_WIDTH - iconBtnRightMargin - iconBtnSize, iconBtnY, iconBtnSize, iconBtnSize);
+        logoutButton.setBounds(
+            WINDOW_WIDTH - iconBtnRightMargin - iconBtnSize,
+            iconBtnY,
+            iconBtnSize,
+            iconBtnSize
+        );
         logoutButton.addActionListener(e -> mainApp.logout());
         add(logoutButton);
-        
-        // 3. Judul & Divider
+
+        //divider ornamen atas judul
         OrnamentalDivider dividerTop = new OrnamentalDivider();
         dividerTop.setBounds((WINDOW_WIDTH - 280) / 2, 130, 280, 8);
         add(dividerTop);
-        
+
+        //judul besar game
         JLabel titleLabel = new JLabel("Rengasdengklok", SwingConstants.CENTER);
-        titleLabel.setFont(new Font("Georgia", Font.BOLD, 48)); // Font size disamakan dengan Login
+        titleLabel.setFont(new Font("Georgia", Font.BOLD, 72));
         titleLabel.setForeground(ColorPalette.CHINA_DOLL);
-        titleLabel.setBounds(0, 140, WINDOW_WIDTH, 60);
+        titleLabel.setBounds(0, 140, WINDOW_WIDTH, 90);
         add(titleLabel);
-        
+
+        //divider ornamen bawah judul
         OrnamentalDivider dividerBottom = new OrnamentalDivider();
-        dividerBottom.setBounds((WINDOW_WIDTH - 50)/2, 210, 50, 8); // Posisi disesuaikan naik
+        dividerBottom.setBounds((WINDOW_WIDTH - 50) / 2, 238, 50, 8);
         add(dividerBottom);
-        
+
+        //subjudul kecil di bawah judul utama
         JLabel subtitleLabel = new JLabel("Jangan Salah Culik!", SwingConstants.CENTER);
-        subtitleLabel.setFont(new Font("Georgia", Font.ITALIC, 18)); // Font size disamakan dengan Login
+        subtitleLabel.setFont(new Font("Georgia", Font.ITALIC, 22));
         subtitleLabel.setForeground(ColorPalette.ROSEWATER);
-        subtitleLabel.setBounds(0, 225, WINDOW_WIDTH, 25);
+        subtitleLabel.setBounds(0, 255, WINDOW_WIDTH, 35);
         add(subtitleLabel);
-        
-        // 4. Tombol Menu Utama
+
+                //ukuran tombol menu utama
         int btnWidth = 588;
         int btnHeight = 78;
+
+        //posisi tombol di tengah layar
         int btnX = (WINDOW_WIDTH - btnWidth) / 2;
         int btnY = 340;
-        int btnGap = 20;
-        
-        storyButton = new MenuButton("Mode Cerita", "Ikuti perjalanan proklamasi kemerdekaan", MenuIconType.BOOK);
+        int btnGap = 20; //jarak antar tombol
+
+        //tombol mode cerita
+        storyButton = new MenuButton(
+            "Mode Cerita",
+            "Ikuti perjalanan proklamasi kemerdekaan",
+            MenuIconType.BOOK
+        );
         storyButton.setBounds(btnX, btnY, btnWidth, btnHeight);
         storyButton.addActionListener(e -> mainApp.startGame());
         add(storyButton);
-        
+
+        //geser posisi Y ke tombol selanjutnya
         btnY += btnHeight + btnGap;
-        
-        quizButton = new MenuButton("Kuis Uji Pemahaman", "Uji pengetahuan sejarah Anda", MenuIconType.QUIZ);
+
+        //tombol kuis
+        quizButton = new MenuButton(
+            "Kuis Uji Pemahaman",
+            "Uji pengetahuan sejarah Anda",
+            MenuIconType.QUIZ
+        );
         quizButton.setBounds(btnX, btnY, btnWidth, btnHeight);
         quizButton.addActionListener(e -> mainApp.showQuizPanel());
         add(quizButton);
-        
+
+        //geser lagi ke bawah
         btnY += btnHeight + btnGap;
-        
-        leaderboardButton = new MenuButton("Leaderboard", "Lihat peringkat pemain terbaik", MenuIconType.TROPHY);
+
+        //tombol leaderboard pemain
+        leaderboardButton = new MenuButton(
+            "Leaderboard",
+            "Lihat peringkat pemain terbaik",
+            MenuIconType.TROPHY
+        );
         leaderboardButton.setBounds(btnX, btnY, btnWidth, btnHeight);
         leaderboardButton.addActionListener(e -> mainApp.showLeaderboardPanel());
         add(leaderboardButton);
-        
-        // 5. Footer (POSISI DISAMAKAN DENGAN LOGIN)
+
+        //footer tulisan di bawah (sama seperti login panel)
         FooterPanel footer = new FooterPanel();
         footer.setBounds(0, WINDOW_HEIGHT - 70, WINDOW_WIDTH, 30);
         add(footer);
     }
-    
+
+        //update sapaan user sesuai data profile dari database
     private void updateGreeting() {
         if (mainApp.getCurrentUser() != null && mainApp.getCurrentProfile() != null) {
+
+            //ambil nama dan gender karakter dari database
             String name = mainApp.getCurrentProfile().getCharacterName();
-            String gender = mainApp.getCurrentProfile().getGender(); 
+            String gender = mainApp.getCurrentProfile().getGender();
+
+            //ubah kata panggil berdasarkan gender
             String honorific = "Bung";
             if (gender != null && (gender.equalsIgnoreCase("Female") || gender.equalsIgnoreCase("Perempuan"))) {
                 honorific = "Sus";
             }
+
+            //tampilkan sapaan lengkap
             greetingPill.setText("Selamat datang, " + honorific + " " + name);
         } else {
+            //fallback kalau profile tidak ditemukan
             greetingPill.setText("Selamat datang, Pejuang");
         }
-        greetingPill.repaint();
+
+        greetingPill.repaint(); //refresh tampilannya
     }
 
-    //--- ENUM ---
-    enum IconButtonType { LOGOUT } 
-    enum MenuIconType { BOOK, QUIZ, TROPHY }
-    
-    //--- KOMPONEN KUSTOM ---
+    //enum tipe icon tombol atas
+    enum IconButtonType { LOGOUT }
 
-    // 1. Greeting Pill
+    //enum tipe icon untuk tombol menu utama
+    enum MenuIconType { BOOK, QUIZ, TROPHY }
+
+    //komponen sapaan bentuk "pill" transparan di kiri atas
     class GreetingPill extends JLabel {
+
         public GreetingPill(String text) {
             super(text, SwingConstants.CENTER);
             setFont(new Font("SansSerif", Font.PLAIN, 14));
             setForeground(ColorPalette.CHINA_DOLL);
         }
-        public void setText(String text) { super.setText(text); }
-        @Override protected void paintComponent(Graphics g) {
+
+        @Override
+        protected void paintComponent(Graphics g) {
             Graphics2D g2d = (Graphics2D) g;
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            
-            // Background Cream Transparan (Warna Muda)
-            g2d.setColor(new Color(224, 203, 185, 40)); 
+
+            //background warna cream tipis transparan
+            g2d.setColor(new Color(224, 203, 185, 40));
             g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 44, 44);
-            
-            // Border Cream
+
+            //border warna cream sedikit lebih tebal
             g2d.setColor(new Color(224, 203, 185, 100));
             g2d.setStroke(new BasicStroke(1.5f));
-            g2d.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 44, 44);
-            
-            // Menggambar teks secara manual
-            g2d.setFont(getFont());
-            g2d.setColor(getForeground());
-            FontMetrics fm = g2d.getFontMetrics();
-            int textX = (getWidth() - fm.stringWidth(getText())) / 2;
-            int textY = (getHeight() + fm.getAscent()) / 2 - 2;
-            g2d.drawString(getText(), textX, textY);
+            g2d.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 44, 44);
+
+            super.paintComponent(g);
         }
     }
-    
-    // 2. Icon Button (Logout)
+
+    //tombol icon bundar (dipakai untuk logout)
     class IconButton extends JButton {
+
         private IconButtonType type;
         private boolean isHovered = false;
-        
+
         public IconButton(IconButtonType type) {
             this.type = type;
-            setContentAreaFilled(false); setFocusPainted(false); setBorderPainted(false);
+
+            //hilangkan efek default tombol
+            setContentAreaFilled(false);
+            setFocusPainted(false);
+            setBorderPainted(false);
             setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+            //kasih event hover
             addMouseListener(new java.awt.event.MouseAdapter() {
-                public void mouseEntered(java.awt.event.MouseEvent evt) { isHovered = true; repaint(); }
-                public void mouseExited(java.awt.event.MouseEvent evt) { isHovered = false; repaint(); }
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    isHovered = true; repaint();
+                }
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    isHovered = false; repaint();
+                }
             });
         }
-        @Override protected void paintComponent(Graphics g) {
+
+        @Override
+        protected void paintComponent(Graphics g) {
             Graphics2D g2d = (Graphics2D) g;
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            
-            int w = getWidth(); int h = getHeight();
-            
-            // Background Cream Transparan
+
+            int w = getWidth();
+            int h = getHeight();
+
+            //background bulat transparan
             g2d.setColor(new Color(224, 203, 185, isHovered ? 60 : 40));
             g2d.fillOval(0, 0, w, h);
-            
-            // Border Cream
+
+            //border bulat
             g2d.setColor(new Color(224, 203, 185, 100));
             g2d.setStroke(new BasicStroke(1.5f));
             g2d.drawOval(1, 1, w - 3, h - 3);
-            
-            // Icon Cream
+
+            //gambar icon logout
             g2d.setColor(ColorPalette.CHINA_DOLL);
-            g2d.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-            
-            int cx = w/2; int cy = h/2;
-            
+            g2d.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+
+            int cx = w / 2;
+            int cy = h / 2;
+
             if (type == IconButtonType.LOGOUT) {
-                g2d.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-                g2d.drawRoundRect(cx-6, cy-8, 12, 16, 3, 3);
+                //kotak pintu
+                g2d.drawRoundRect(cx - 6, cy - 8, 12, 16, 3, 3);
+
+                //panah keluar
                 int arrowX = cx + 4;
                 g2d.drawLine(arrowX - 8, cy, arrowX + 6, cy);
                 g2d.drawLine(arrowX + 2, cy - 4, arrowX + 6, cy);
@@ -251,133 +346,229 @@ public class MainMenuPanel extends JPanel {
             }
         }
     }
-    
-    // 3. Menu Button (Tombol Kaca Besar)
+
+        //tombol menu utama (mode cerita, kuis, leaderboard)
     class MenuButton extends JButton {
-        private String title, subtitle;
-        private MenuIconType iconType;
+
+        private String title;        //judul tombol
+        private String subtitle;     //deskripsi kecil
+        private MenuIconType iconType; 
         private boolean isHovered = false;
-        
+
         public MenuButton(String title, String subtitle, MenuIconType iconType) {
-            this.title = title; this.subtitle = subtitle; this.iconType = iconType;
-            setContentAreaFilled(false); setFocusPainted(false); setBorderPainted(false);
+            this.title = title;
+            this.subtitle = subtitle;
+            this.iconType = iconType;
+
+            //hapus efek default tombol
+            setContentAreaFilled(false);
+            setFocusPainted(false);
+            setBorderPainted(false);
             setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+            //kasih event hover
             addMouseListener(new MouseAdapter() {
-                public void mouseEntered(MouseEvent e) { isHovered = true; repaint(); }
-                public void mouseExited(MouseEvent e) { isHovered = false; repaint(); }
+                public void mouseEntered(MouseEvent e) { 
+                    isHovered = true; repaint(); 
+                }
+                public void mouseExited(MouseEvent e) { 
+                    isHovered = false; repaint(); 
+                }
             });
         }
-        @Override protected void paintComponent(Graphics g) {
+
+        @Override
+        protected void paintComponent(Graphics g) {
             Graphics2D g2d = (Graphics2D) g;
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            
-            int w = getWidth(); int h = getHeight();
-            
-            // Background Gradasi Merah/Coklat
+
+            int w = getWidth();
+            int h = getHeight();
+
+            //background gradient tombol
             if (isHovered) {
-                GradientPaint gp = new GradientPaint(0, 0, new Color(188, 126, 121, 200), w, h, new Color(137, 95, 97, 200));
+                //warna lebih terang saat hover
+                GradientPaint gp = new GradientPaint(
+                    0, 0, new Color(137, 95, 97),
+                    w, h, new Color(188, 126, 121)
+                );
                 g2d.setPaint(gp);
             } else {
-                GradientPaint gp = new GradientPaint(0, 0, new Color(168, 106, 101, 150), w, h, new Color(117, 75, 77, 150));
+                //warna default lebih gelap
+                GradientPaint gp = new GradientPaint(
+                    0, 0, new Color(127, 85, 87),
+                    w, h, new Color(178, 116, 111)
+                );
                 g2d.setPaint(gp);
             }
             g2d.fillRoundRect(0, 0, w, h, 16, 16);
-            
-            // Efek Kilau Kaca (Top Shine)
-            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.2f));
-            GradientPaint innerGlow = new GradientPaint(0, 0, Color.WHITE, 0, h/3, new Color(255,255,255,0));
-            g2d.setPaint(innerGlow);
-            g2d.fillRoundRect(1, 1, w - 2, h/2, 16, 16);
+
+            //efek kilau di bagian atas tombol
+            g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.15f));
+            GradientPaint shine = new GradientPaint(0, 0, Color.WHITE, 0, h / 3, new Color(255, 255, 255, 0));
+            g2d.setPaint(shine);
+            g2d.fillRoundRect(1, 1, w - 2, h / 2, 16, 16);
             g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-            
-            // Border Luar
-            g2d.setColor(new Color(224, 203, 185, 120));
-            g2d.setStroke(new BasicStroke(2f));
+
+            //border luar
+            g2d.setColor(new Color(224, 203, 185, 200));
+            g2d.setStroke(new BasicStroke(2.5f));
             g2d.drawRoundRect(2, 2, w - 5, h - 5, 16, 16);
-            
-            // Kotak Icon Kiri
-            int iconBoxSize = 48; int iconBoxX = 24; int iconBoxY = (h - iconBoxSize) / 2;
-            g2d.setColor(new Color(224, 203, 185, 60));
+
+            //kotak icon kiri
+            int iconBoxSize = 48;
+            int iconBoxX = 24;
+            int iconBoxY = (h - iconBoxSize) / 2;
+
+            g2d.setColor(new Color(224, 203, 185, 100));
             g2d.fillRoundRect(iconBoxX, iconBoxY, iconBoxSize, iconBoxSize, 12, 12);
-            g2d.setColor(new Color(224, 203, 185, 180));
+
+            g2d.setColor(new Color(224, 203, 185, 140));
             g2d.setStroke(new BasicStroke(1.5f));
             g2d.drawRoundRect(iconBoxX, iconBoxY, iconBoxSize, iconBoxSize, 12, 12);
-            
-            //gambar icon 
+
+            //gambar icon berdasarkan tipe menu
             g2d.setColor(ColorPalette.CHINA_DOLL);
             g2d.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-            int icx = iconBoxX + iconBoxSize/2; int icy = iconBoxY + iconBoxSize/2;
-            
+            int icx = iconBoxX + iconBoxSize / 2;
+            int icy = iconBoxY + iconBoxSize / 2;
+
             if (iconType == MenuIconType.BOOK) {
-                //buku Melengkung
-                g2d.drawRect(icx-10, icy-7, 20, 14); g2d.drawLine(icx, icy-7, icx, icy+7); 
-                g2d.drawLine(icx-6, icy, icx-2, icy); g2d.drawLine(icx+2, icy, icx+6, icy); 
+                //icon buku
+                g2d.drawRect(icx - 10, icy - 7, 20, 14);
+                g2d.drawLine(icx, icy - 7, icx, icy + 7);
+                g2d.drawLine(icx - 6, icy, icx - 2, icy);
+                g2d.drawLine(icx + 2, icy, icx + 6, icy);
+
             } else if (iconType == MenuIconType.QUIZ) {
-                //tanda Tanya Serif
-                g2d.setFont(new Font("Georgia", Font.BOLD, 32)); g2d.drawString("?", icx-8, icy+10);
+                //icon tanda tanya
+                g2d.setFont(new Font("Georgia", Font.BOLD, 28));
+                g2d.drawString("?", icx - 7, icy + 10);
+
             } else if (iconType == MenuIconType.TROPHY) {
-                //piala Solid
-                g2d.drawArc(icx-8, icy-8, 16, 16, 180, 180); g2d.drawLine(icx, icy, icx, icy+8); g2d.drawLine(icx-6, icy+8, icx+6, icy+8); 
+                //icon piala
+                g2d.drawArc(icx - 8, icy - 8, 16, 16, 180, 180);
+                g2d.drawLine(icx, icy, icx, icy + 8);
+                g2d.drawLine(icx - 6, icy + 8, icx + 6, icy + 8);
             }
-            
-            //teks Judul
+
+            //tulis judul tombol
             g2d.setFont(new Font("Georgia", Font.PLAIN, 26));
             g2d.setColor(ColorPalette.CHINA_DOLL);
             g2d.drawString(title, 90, 40);
-            
-            //teks Deskripsi
+
+            //tulis deskripsi tombol
             g2d.setFont(new Font("SansSerif", Font.PLAIN, 13));
-            g2d.setColor(new Color(224, 203, 185, 220)); 
+            g2d.setColor(new Color(224, 203, 185, 220));
             g2d.drawString(subtitle, 90, 65);
-            
-            //panah Kanan
-            g2d.setFont(new Font("SansSerif", Font.PLAIN, 24));
+
+            //panah kanan
             g2d.setColor(ColorPalette.CHINA_DOLL);
-            g2d.drawString("→", w - 50, h/2 + 8);
+            g2d.setFont(new Font("SansSerif", Font.PLAIN, 24));
+            g2d.drawString("→", w - 50, h / 2 + 8);
         }
     }
-    
-    //divider
+
+        //garis ornamen dekoratif (dipakai atas dan bawah judul)
     class OrnamentalDivider extends JPanel {
-        public OrnamentalDivider() { setOpaque(false); }
-        @Override protected void paintComponent(Graphics g) {
+
+        public OrnamentalDivider() {
+            setOpaque(false); //biar background panel transparan
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
             super.paintComponent(g);
+
             Graphics2D g2d = (Graphics2D) g;
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            int w = getWidth(); int centerX = w / 2; int centerY = 4;
+
+            int w = getWidth();
+            int centerX = w / 2;
+            int centerY = 4;
+
             Color lineColor = new Color(168, 106, 101);
-            GradientPaint leftGrad = new GradientPaint(0, centerY, new Color(168, 106, 101, 0), centerX - 24, centerY, lineColor);
-            g2d.setPaint(leftGrad); g2d.setStroke(new BasicStroke(1.5f)); g2d.drawLine(0, centerY, centerX - 24, centerY);
+
+            //gradasi garis kiri
+            GradientPaint leftGrad = new GradientPaint(
+                0, centerY,
+                new Color(168, 106, 101, 0),
+                centerX - 24, centerY,
+                lineColor
+            );
+            g2d.setPaint(leftGrad);
+            g2d.setStroke(new BasicStroke(1.5f));
+            g2d.drawLine(0, centerY, centerX - 24, centerY);
+
+            //diamond kecil di tengah
             g2d.setColor(new Color(186, 84, 80));
             int s = 6;
-            int[] x = {centerX, centerX + s/2, centerX, centerX - s/2};
-            int[] y = {centerY - s/2, centerY, centerY + s/2, centerY};
+            int[] x = { centerX, centerX + s/2, centerX, centerX - s/2 };
+            int[] y = { centerY - s/2, centerY, centerY + s/2, centerY };
             g2d.fillPolygon(x, y, 4);
-            GradientPaint rightGrad = new GradientPaint(centerX + 24, centerY, lineColor, w, centerY, new Color(168, 106, 101, 0));
-            g2d.setPaint(rightGrad); g2d.drawLine(centerX + 24, centerY, w, centerY);
+
+            //gradasi garis kanan
+            GradientPaint rightGrad = new GradientPaint(
+                centerX + 24, centerY,
+                lineColor,
+                w, centerY,
+                new Color(168, 106, 101, 0)
+            );
+            g2d.setPaint(rightGrad);
+            g2d.drawLine(centerX + 24, centerY, w, centerY);
         }
     }
-    
-    //footer 
+
+    //footer dekoratif di bawah (sama seperti login panel)
     class FooterPanel extends JPanel {
-        public FooterPanel() { setOpaque(false); }
-        @Override protected void paintComponent(Graphics g) {
+
+        public FooterPanel() {
+            setOpaque(false); //tanpa background
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
             super.paintComponent(g);
+
             Graphics2D g2d = (Graphics2D) g;
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            int centerX = getWidth() / 2; int centerY = getHeight() / 2;
+
+            int centerX = getWidth() / 2;
+            int centerY = getHeight() / 2;
+
             Color lineColor = new Color(168, 106, 101);
-            GradientPaint leftGrad = new GradientPaint(centerX - 180, centerY, new Color(168, 106, 101, 0), centerX - 80, centerY, lineColor);
-            g2d.setPaint(leftGrad); g2d.setStroke(new BasicStroke(1.5f)); g2d.drawLine(centerX - 180, centerY, centerX - 80, centerY);
+
+            //gradasi garis kiri
+            GradientPaint leftGrad = new GradientPaint(
+                centerX - 180, centerY,
+                new Color(168, 106, 101, 0),
+                centerX - 80, centerY,
+                lineColor
+            );
+            g2d.setPaint(leftGrad);
+            g2d.setStroke(new BasicStroke(1.5f));
+            g2d.drawLine(centerX - 180, centerY, centerX - 80, centerY);
+
+            //teks footer
             g2d.setFont(new Font("Georgia", Font.PLAIN, 12));
             g2d.setColor(ColorPalette.ROSEWATER);
+
             String text = "Indonesia Merdeka • 1945";
             FontMetrics fm = g2d.getFontMetrics();
             int textWidth = fm.stringWidth(text);
+
             g2d.drawString(text, centerX - textWidth / 2, centerY + 5);
-            GradientPaint rightGrad = new GradientPaint(centerX + 80, centerY, lineColor, centerX + 180, centerY, new Color(168, 106, 101, 0));
-            g2d.setPaint(rightGrad); g2d.drawLine(centerX + 80, centerY, centerX + 180, centerY);
+
+            //gradasi garis kanan
+            GradientPaint rightGrad = new GradientPaint(
+                centerX + 80, centerY,
+                lineColor,
+                centerX + 180, centerY,
+                new Color(168, 106, 101, 0)
+            );
+            g2d.setPaint(rightGrad);
+            g2d.drawLine(centerX + 80, centerY, centerX + 180, centerY);
         }
     }
 }
