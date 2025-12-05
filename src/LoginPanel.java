@@ -638,6 +638,7 @@ public class LoginPanel extends JPanel {
     class StyledTextField extends JTextField {
         private String placeholder; //teks placeholder
         private boolean isUsername; //penanda apakah field ini untuk username
+        private Image userIcon = new ImageIcon("assets/Icon/userr_icon.png").getImage();
 
         public StyledTextField(String placeholder, boolean isUsername) {
             this.placeholder = placeholder;
@@ -673,10 +674,8 @@ public class LoginPanel extends JPanel {
             int iconY = getHeight() / 2;
 
             if (isUsername) {
-                //gambar kepala
-                g2d.drawOval(iconX + 6, iconY - 9, 8, 8);
-                //gambar bahu
-                g2d.drawArc(iconX + 2, iconY + 1, 16, 14, 0, -180);
+                g2d.drawImage(userIcon, iconX - 10, iconY - 20, 40, 40, null);
+
             }
 
             //gambar placeholder kalau belum ada teks & belum fokus
@@ -696,6 +695,7 @@ public class LoginPanel extends JPanel {
     //textfield khusus buat input password yang ada icon gembok
     class StyledPasswordField extends JPasswordField {
         private String placeholder; //teks placeholder
+        private Image lockIcon = new ImageIcon("assets/Icon/lockk_icon.png").getImage();
 
         public StyledPasswordField(String placeholder) {
             this.placeholder = placeholder;
@@ -730,10 +730,7 @@ public class LoginPanel extends JPanel {
             int iconX = 16;
             int iconY = getHeight() / 2;
 
-            //bagian kotak kunci
-            g2d.drawRoundRect(iconX + 4, iconY - 1, 12, 10, 2, 2);
-            //bagian lengkungan gembok
-            g2d.drawArc(iconX + 7, iconY - 9, 6, 9, 0, 180);
+            g2d.drawImage(lockIcon, iconX - 10, iconY - 20, 40, 40, null);
 
             //placeholder teks
             g2d.setColor(getForeground());

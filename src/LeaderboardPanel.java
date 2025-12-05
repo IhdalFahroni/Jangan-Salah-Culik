@@ -1,373 +1,416 @@
-
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.*;
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 public class LeaderboardPanel extends JPanel {
     private RengasdengklokGame mainApp;
-    private JButton backButton;
     private JPanel dataPanel;
-    
-    // vintej
-    private final Color BACKGROUND_COLOR = new Color(0xF5, 0xED, 0xE0); // Cream vintage
-    private final Color ACCENT_COLOR = new Color(0x8B, 0x45, 0x1E);     // Dark brown vintage
-    private final Color TEXT_COLOR = new Color(0x5D, 0x30, 0x3C);       // Deep brown
-    private final Color BUTTON_BACKGROUND = new Color(0xA0, 0x6C, 0x4F); // Medium brown
-    private final Color BUTTON_TEXT_COLOR = new Color(115, 102, 47); //Dark ijo yang dikirim alya
-    private final Color ROW_EVEN_COLOR = new Color(0xFA, 0xF3, 0xE8);   // Light cream untuk baris genap
-    private final Color ROW_ODD_COLOR = new Color(0xF5, 0xED, 0xE0);    // Cream vintage untuk baris ganjil
-    private final Color HEADER_BACKGROUND = new Color(0x8B, 0x45, 0x1E); // Dark brown untuk header
-    private final Color HEADER_TEXT_COLOR = new Color(0xFA, 0xF3, 0xE8); // Light cream untuk text header
-    
-    // Fonts 
-    private final Font LEADERBOARD_TITLE_FONT = new Font("Serif", Font.BOLD, 32);
-    private final Font LEADERHEADER_FONT = new Font("Serif", Font.BOLD, 14);
-    private final Font DATA_FONT = new Font("Serif", Font.PLAIN, 13);
-    private final Font BACK_BUTTON_FONT = new Font("Serif", Font.BOLD, 16);
-    
-    // ukuran
-    private final Dimension WINDOW_SIZE = new Dimension(800, 600);
-    private final Dimension HEADER_SIZE = new Dimension(650, 35);
-    private final Dimension ROW_SIZE = new Dimension(650, 30);
-    private final Dimension BACK_BUTTON_SIZE = new Dimension(200, 45);
-    
-    // posisi
-    private final Point TITLE_POSITION = new Point(200, 30);
-    private final Point HEADER_POSITION = new Point(75, 100);
-    private final Point DATA_START_POSITION = new Point(75, 135);
-    private final Point BACK_BUTTON_POSITION = new Point(300, 500);
-    
-    // Column widths yang disesuaikan
-    private final int[] COLUMN_WIDTHS = {70, 180, 70, 100, 150}; // Lebar kolom disesuaikan
-    private final int TOTAL_WIDTH = 650; // Total width disesuaikan
-    
-    // Medal colors
-    private final Color GOLD_COLOR = new Color(0xD4, 0xAF, 0x37);    // Gold vintage dem
-    private final Color SILVER_COLOR = new Color(0xC0, 0xC0, 0xC0);  // Silver
-    private final Color BRONZE_COLOR = new Color(0xCD, 0x7F, 0x32);  // Bronze
+    private BufferedImage noiseTexture;
+
+    // Ukuran Window
+    private static final int WINDOW_WIDTH = 1024;
+    private static final int WINDOW_HEIGHT = 768;
+
+    // Font Setup
+    private final Font TITLE_FONT = new Font("Georgia", Font.BOLD, 46);
+    private final Font SUBTITLE_FONT = new Font("Georgia", Font.ITALIC, 16);
+    private final Font HEADER_FONT = new Font("SansSerif", Font.BOLD, 11);
+    private final Font ROW_NAME_FONT = new Font("Georgia", Font.BOLD, 14);
+    private final Font ROW_DETAIL_FONT = new Font("SansSerif", Font.PLAIN, 12);
+
+    private final int CONTAINER_WIDTH = 960; 
+    private final int[] COL_WIDTHS = { 70, 230, 300, 120, 100, 140 };
     
     public LeaderboardPanel(RengasdengklokGame mainApp) {
         this.mainApp = mainApp;
+        
+        setLayout(null);
+        setBackground(ColorPalette.DARK_BG_1);
+        setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
+
+        generateNoiseTexture(); 
         initializeUI();
-        loadLeaderboard();
     }
-    
+
     public void onPanelShown() {
         loadLeaderboard();
     }
-    
-    private void initializeUI() {
-        setLayout(null);
-        setBackground(BACKGROUND_COLOR);
-        setPreferredSize(WINDOW_SIZE);
-        
-        createTitle();
-        createHeader();
-        createDataArea();
-        createBackButton();
-        addDecorativeElements();
+
+    //GRAPHICS & BACKGROUND 
+    private void generateNoiseTexture() {
+        noiseTexture = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = noiseTexture.createGraphics();
+        java.util.Random rand = new java.util.Random(12345);
+        for (int y = 0; y < 100; y++) {
+            for (int x = 0; x < 100; x++) {
+                int noise = rand.nextInt(80) - 40;
+                int gray = 128 + noise;
+                gray = Math.max(0, Math.min(255, gray));
+                noiseTexture.setRGB(x, y, new Color(gray, gray, gray, 15).getRGB());
+            }
+        }
+        g.dispose();
     }
-    
-    private void createTitle() {
-        JLabel titleLabel = new JLabel("Papan Peringkat", JLabel.CENTER);
-        titleLabel.setBounds(TITLE_POSITION.x, TITLE_POSITION.y, 400, 50);
-        titleLabel.setFont(LEADERBOARD_TITLE_FONT);
-        titleLabel.setForeground(ACCENT_COLOR);
-        
-        // Subtitle italic biar ky keren gimana gitu
-        JLabel subtitleLabel = new JLabel("Top 10 Pemain Terbaik", JLabel.CENTER);
-        subtitleLabel.setBounds(TITLE_POSITION.x, TITLE_POSITION.y + 40, 400, 25);
-        subtitleLabel.setFont(new Font("Serif", Font.ITALIC, 14));
-        subtitleLabel.setForeground(new Color(0x7D, 0x5A, 0x45));
-        
-        add(titleLabel);
-        add(subtitleLabel);
-    }
-    
-    private void createHeader() {
-        // Header background dengan border vintage
-        JPanel headerPanel = new JPanel();
-        headerPanel.setBounds(HEADER_POSITION.x, HEADER_POSITION.y, HEADER_SIZE.width, HEADER_SIZE.height);
-        headerPanel.setBackground(HEADER_BACKGROUND);
-        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.X_AXIS));
-        headerPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(0x5D, 0x30, 0x3C), 2),
-            BorderFactory.createEmptyBorder(8, 15, 8, 15)
-        ));
-        
-        String[] headers = {"Rank", "Username", "Skor", "Waktu", "Tanggal"};
-        
-        for (int i = 0; i < headers.length; i++) {
-            JLabel header = new JLabel(headers[i], JLabel.CENTER);
-            header.setFont(LEADERHEADER_FONT);
-            header.setForeground(HEADER_TEXT_COLOR);
-            header.setPreferredSize(new Dimension(COLUMN_WIDTHS[i], 20));
-            header.setMinimumSize(new Dimension(COLUMN_WIDTHS[i], 20));
-            header.setMaximumSize(new Dimension(COLUMN_WIDTHS[i], 20));
-            
-            headerPanel.add(header);
-            if (i < headers.length - 1) {
-                headerPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // Gradient Background
+        Color[] gradColors = {ColorPalette.DARK_BG_1, ColorPalette.DARK_BG_2, ColorPalette.DARK_BG_3};
+        GradientPaint gp = new GradientPaint(0, 0, gradColors[0], 0, getHeight(), gradColors[2]);
+        g2d.setPaint(gp);
+        g2d.fillRect(0, 0, getWidth(), getHeight());
+
+        // Noise Texture
+        for (int y = 0; y < getHeight(); y += 100) {
+            for (int x = 0; x < getWidth(); x += 100) {
+                g2d.drawImage(noiseTexture, x, y, null);
             }
         }
         
-        add(headerPanel);
+        // Vignette
+        RadialGradientPaint vignette = new RadialGradientPaint(
+            getWidth()/2, getHeight()/2, getWidth(),
+            new float[]{0.0f, 1.0f},
+            new Color[]{new Color(0,0,0,0), new Color(0,0,0,80)}
+        );
+        g2d.setPaint(vignette);
+        g2d.fillRect(0,0,getWidth(), getHeight());
     }
-    
-    private void createDataArea() {
-        dataPanel = new JPanel();
-        dataPanel.setBounds(DATA_START_POSITION.x, DATA_START_POSITION.y, TOTAL_WIDTH, 320);
-        dataPanel.setLayout(new BoxLayout(dataPanel, BoxLayout.Y_AXIS));
-        dataPanel.setBackground(BACKGROUND_COLOR);
-        dataPanel.setBorder(BorderFactory.createLineBorder(new Color(0xCD, 0xAA, 0x7D), 1));
+
+    //UI COMPONENTS 
+    private void initializeUI() {
+        // 1. Tombol Kembali
+        BackButton backBtn = new BackButton("← KEMBALI");
+        backBtn.setBounds(32, 32, 120, 40);
+        backBtn.addActionListener(e -> mainApp.showPanel("MAIN_MENU"));
+        add(backBtn);
+
+        // 2. Judul
+        JLabel titleLabel = new JLabel("Leaderboard", SwingConstants.CENTER);
+        titleLabel.setFont(TITLE_FONT);
+        titleLabel.setForeground(ColorPalette.CHINA_DOLL);
+        titleLabel.setBounds(0, 35, WINDOW_WIDTH, 60);
+        add(titleLabel);
+
+        // Divider
+        OrnamentalDivider divider = new OrnamentalDivider();
+        divider.setBounds((WINDOW_WIDTH - 300) / 2, 95, 300, 10);
+        add(divider);
+
+        JLabel subtitleLabel = new JLabel("Peringkat 10 Pemain Terbaik", SwingConstants.CENTER);
+        subtitleLabel.setFont(SUBTITLE_FONT);
+        subtitleLabel.setForeground(ColorPalette.ROSEWATER);
+        subtitleLabel.setBounds(0, 110, WINDOW_WIDTH, 25);
+        add(subtitleLabel);
+
+        // 3. Table Container (Glass Panel)
+        // Tinggi 560px cukup untuk 10 baris @50px + Header 40px + Margin
+        int containerH = 560; 
+        int containerX = (WINDOW_WIDTH - CONTAINER_WIDTH) / 2; // Posisi X agar pas tengah
+        int containerY = 150; 
+
+        JPanel tableContainer = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Background Transparan
+                g2d.setColor(new Color(40, 30, 30, 160)); 
+                g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 24, 24);
+                
+                // Border
+                g2d.setColor(new Color(168, 106, 101, 80));
+                g2d.setStroke(new BasicStroke(1f));
+                g2d.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 24, 24);
+            }
+        };
+        tableContainer.setLayout(null);
+        tableContainer.setOpaque(false);
+        tableContainer.setBounds(containerX, containerY, CONTAINER_WIDTH, containerH);
+        add(tableContainer);
+
+        // 4. Table Header (Fixed at Top)
+        JPanel headerRow = new JPanel();
+        headerRow.setLayout(new BoxLayout(headerRow, BoxLayout.X_AXIS));
+        headerRow.setOpaque(false);
+        // Set ukuran header SAMA PERSIS dengan lebar container
+        headerRow.setBounds(0, 10, CONTAINER_WIDTH, 40); 
         
-        add(dataPanel);
-    }
-    
-    private void createBackButton() {
-        backButton = new JButton("← Kembali ke Menu");
-        backButton.setBounds(BACK_BUTTON_POSITION.x, BACK_BUTTON_POSITION.y,
-                           BACK_BUTTON_SIZE.width, BACK_BUTTON_SIZE.height);
-        backButton.setBackground(BUTTON_BACKGROUND);
-        backButton.setForeground(BUTTON_TEXT_COLOR);
-        backButton.setFont(BACK_BUTTON_FONT);
-        backButton.setFocusPainted(false);
-        backButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        backButton.setHorizontalAlignment(SwingConstants.CENTER);
-        backButton.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(ACCENT_COLOR, 2),
-            BorderFactory.createEmptyBorder(10, 20, 10, 20)
+        // Padding kiri sedikit agar teks tidak mepet border container
+        headerRow.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(216, 166, 148, 50)),
+            BorderFactory.createEmptyBorder(0, 20, 0, 20) // Kiri kanan 20px
         ));
         
-        // Efek hover
-        backButton.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                backButton.setBackground(ACCENT_COLOR);
-                backButton.setForeground(BUTTON_TEXT_COLOR);
-            }
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                backButton.setBackground(BUTTON_BACKGROUND);
-                backButton.setForeground(BUTTON_TEXT_COLOR);
-            }
-        });
+        headerRow.add(createHeaderLabel("RANK", COL_WIDTHS[0]));
+        headerRow.add(createHeaderLabel("NAMA PEMAIN", COL_WIDTHS[1]));
+        headerRow.add(createHeaderLabel("GELAR KEHORMATAN", COL_WIDTHS[2]));
+        headerRow.add(createHeaderLabel("SKOR", COL_WIDTHS[3]));
+        headerRow.add(createHeaderLabel("WAKTU", COL_WIDTHS[4]));
+        headerRow.add(createHeaderLabel("TANGGAL", COL_WIDTHS[5]));
         
-        backButton.addActionListener(e -> mainApp.showPanel("MAIN_MENU"));
+        tableContainer.add(headerRow);
+
+        // 5. Data Rows
+        dataPanel = new JPanel();
+        dataPanel.setLayout(new GridLayout(10, 1, 0, 4)); // 10 Baris fix
+        dataPanel.setOpaque(false);
+        // Bounds disesuaikan: x=0, lebar=CONTAINER_WIDTH agar full
+        dataPanel.setBounds(0, 55, CONTAINER_WIDTH, 490); 
         
-        add(backButton);
+        // Beri padding internal ke panel data agar kontennya lurus sama header
+        dataPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20));
+
+        tableContainer.add(dataPanel);
+        
+        // 6. Footer Text
+        FooterPanel footer = new FooterPanel();
+        footer.setBounds(0, WINDOW_HEIGHT - 35, WINDOW_WIDTH, 30);
+        add(footer);
     }
-    
-    // ni method yang atur border atas bawah estetik vintej itu
-    private void addDecorativeElements() {
-        // Garis dekoratif atas
-        JSeparator topSeparator = new JSeparator(SwingConstants.HORIZONTAL);
-        topSeparator.setBounds(75, 90, 650, 2);
-        topSeparator.setForeground(ACCENT_COLOR);
-        topSeparator.setBackground(ACCENT_COLOR);
-        add(topSeparator);
-        
-        // Garis dekoratif bawah
-        JSeparator bottomSeparator = new JSeparator(SwingConstants.HORIZONTAL);
-        bottomSeparator.setBounds(75, 465, 650, 2);
-        bottomSeparator.setForeground(ACCENT_COLOR);
-        bottomSeparator.setBackground(ACCENT_COLOR);
-        add(bottomSeparator);
-        
-        // Corner decorations vintage
-        JLabel cornerTL = createCornerDecoration("╔", 65, 75);
-        JLabel cornerTR = createCornerDecoration("╗", 720, 75);
-        JLabel cornerBL = createCornerDecoration("╚", 65, 455);
-        JLabel cornerBR = createCornerDecoration("╝", 720, 455);
-        
-        add(cornerTL);
-        add(cornerTR);
-        add(cornerBL);
-        add(cornerBR);
+
+    private JLabel createHeaderLabel(String text, int width) {
+        JLabel lbl = new JLabel(text.toUpperCase());
+        lbl.setFont(HEADER_FONT);
+        lbl.setForeground(new Color(216, 166, 148, 120));
+        // Pakai PreferredSize Fix agar kolom tidak melar/menciut sembarangan
+        lbl.setPreferredSize(new Dimension(width, 30));
+        lbl.setMinimumSize(new Dimension(width, 30));
+        lbl.setMaximumSize(new Dimension(width, 30));
+        return lbl;
     }
-    
-    private JLabel createCornerDecoration(String symbol, int x, int y) {
-        JLabel corner = new JLabel(symbol);
-        corner.setBounds(x, y, 20, 20);
-        corner.setFont(new Font("Monospaced", Font.BOLD, 16));
-        corner.setForeground(ACCENT_COLOR);
-        return corner;
-    }
-    
+
+    //DATA LOADING 
     private void loadLeaderboard() {
-        System.out.println("Loading leaderboard data...");
-        
-        // Ambil 10 data teratas
+        dataPanel.removeAll();
         List<ScoreEntry> scores = mainApp.getDbManager().getTopScores(10);
         
-        // Membersihkan data yang sudah ada
-        dataPanel.removeAll();
-        
-        System.out.println("Found " + scores.size() + " scores in database");
-        
-        // Buat baris data - maksimal 10
-        int rowsToShow = Math.min(scores.size(), 10);
-        
-        for (int i = 0; i < rowsToShow; i++) {
-            ScoreEntry score = scores.get(i);
-            int rank = i + 1;
-            
-            String username = score.getUsername();
-            int playerScore = score.getScore();
-            int timeTaken = score.getTimeTaken();
-            String quizDuration = formatQuizDuration(timeTaken);
-            String time = formatTimestamp(score.getAttemptedAt());
-            
-            JPanel rowPanel = createDataRow(rank, username, playerScore, quizDuration, time);
-            dataPanel.add(rowPanel);
-            
-            // Add small space between rows
-            if (i < rowsToShow - 1) {
-                dataPanel.add(Box.createRigidArea(new Dimension(0, 2)));
+        for (int i = 0; i < 10; i++) {
+            JPanel row;
+            if (i < scores.size()) {
+                row = createDataRow(i + 1, scores.get(i));
+            } else {
+                row = createEmptyRow(i + 1);
             }
+            dataPanel.add(row);
         }
-        
-        // Jika kurang dari 10 data, tambahkan baris kosong
-        for (int i = rowsToShow; i < 10; i++) {
-            JPanel emptyRow = createEmptyRow(i + 1);
-            dataPanel.add(emptyRow);
-            if (i < 9) { // Diperbaiki dari 19 ke 9
-                dataPanel.add(Box.createRigidArea(new Dimension(0, 2)));
-            }
-        }
-        
+
         dataPanel.revalidate();
         dataPanel.repaint();
     }
-    
-    private String formatQuizDuration(int seconds) {
-        if (seconds <= 0) return "0:00";
+
+    private JPanel createDataRow(int rank, ScoreEntry s) {
+        JPanel row = new JPanel();
+        row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
+        row.setOpaque(false); 
         
-        int minutes = seconds / 60;
-        int remainingSeconds = seconds % 60;
-        return String.format("%d:%02d", minutes, remainingSeconds);
-    }
-    
-    private String formatTimestamp(java.util.Date date) {
-        if (date == null) return "N/A";
+        // Custom painting background per baris
+        JPanel content = new JPanel() {
+             @Override
+            protected void paintComponent(Graphics g) {
+                if (isOpaque()) {
+                    g.setColor(getBackground());
+                    g.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                }
+            }
+        };
+        content.setLayout(new BoxLayout(content, BoxLayout.X_AXIS));
         
-        // Format sederhana: DD/MM/YYYY HH:MM
-        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yy HH:mm");
-        return sdf.format(date);
-    }
-    
-    private JPanel createDataRow(int rank, String username, int score, String quizDuration, String time) {
-        JPanel rowPanel = new JPanel();
-        rowPanel.setLayout(new BoxLayout(rowPanel, BoxLayout.X_AXIS));
-        rowPanel.setPreferredSize(new Dimension(ROW_SIZE.width, ROW_SIZE.height));
-        rowPanel.setMaximumSize(new Dimension(ROW_SIZE.width, ROW_SIZE.height));
-        
-        // Alternating row colors dengan border tipis
+        // Logic warna background belang
         if (rank % 2 == 0) {
-            rowPanel.setBackground(ROW_EVEN_COLOR);
+            content.setBackground(new Color(255, 255, 255, 10)); // Putih transparan
+            content.setOpaque(true);
         } else {
-            rowPanel.setBackground(ROW_ODD_COLOR);
+            content.setBackground(new Color(0,0,0,0));
+            content.setOpaque(false);
         }
-        
-        rowPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xE8, 0xDC, 0xC8)),
-            BorderFactory.createEmptyBorder(5, 15, 5, 15)
-        ));
-        
-        // Rank - dengan icon medali untuk top 3
-        String rankText;
-        Color rankColor;
-        if (rank == 1) {
-            rankText = "🥇 " + rank;
-            rankColor = GOLD_COLOR;
-        } else if (rank == 2) {
-            rankText = "🥈 " + rank;
-            rankColor = SILVER_COLOR;
-        } else if (rank == 3) {
-            rankText = "🥉 " + rank;
-            rankColor = BRONZE_COLOR;
-        } else {
-            rankText = String.valueOf(rank);
-            rankColor = TEXT_COLOR;
-        }
-        
-        JLabel rankLabel = createDataLabel(rankText, COLUMN_WIDTHS[0], JLabel.CENTER);
-        rankLabel.setForeground(rankColor);
-        rankLabel.setFont(DATA_FONT.deriveFont(Font.BOLD));
 
-        // Username 
-        JLabel usernameLabel = createDataLabel(username, COLUMN_WIDTHS[1], JLabel.CENTER);
-        usernameLabel.setForeground(TEXT_COLOR);
-
-        // Score - CENTER
-        JLabel scoreLabel = createDataLabel(String.valueOf(score), COLUMN_WIDTHS[2], JLabel.CENTER);
-        scoreLabel.setForeground(TEXT_COLOR);
-        scoreLabel.setFont(DATA_FONT.deriveFont(Font.BOLD));
-
-        // Lama Quiz - CENTER
-        JLabel durationLabel = createDataLabel(quizDuration, COLUMN_WIDTHS[3], JLabel.CENTER);
-        durationLabel.setForeground(TEXT_COLOR);
-
-        // Time - CENTER
-        JLabel timeLabel = createDataLabel(time, COLUMN_WIDTHS[4], JLabel.CENTER);
-        timeLabel.setForeground(TEXT_COLOR);
-        timeLabel.setFont(DATA_FONT.deriveFont(11f)); // Font sedikit lebih kecil
+        // 1. Rank Icon
+        JPanel rankWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 8));
+        rankWrapper.setOpaque(false);
+        setFixedSize(rankWrapper, COL_WIDTHS[0]);
         
-        // Tambah komponen dengan spacing yang sama dengan header
-        rowPanel.add(rankLabel);
-        rowPanel.add(Box.createRigidArea(new Dimension(5, 0)));
-        rowPanel.add(usernameLabel);
-        rowPanel.add(Box.createRigidArea(new Dimension(5, 0)));
-        rowPanel.add(scoreLabel);
-        rowPanel.add(Box.createRigidArea(new Dimension(5, 0)));
-        rowPanel.add(durationLabel);
-        rowPanel.add(Box.createRigidArea(new Dimension(5, 0)));
-        rowPanel.add(timeLabel);
-        
-        return rowPanel;
+        RankIconPanel icon = new RankIconPanel(rank);
+        icon.setPreferredSize(new Dimension(32, 32));
+        rankWrapper.add(icon);
+        content.add(rankWrapper);
+
+        // 2. Nama
+        content.add(createDataLabel(s.getUsername(), COL_WIDTHS[1], ROW_NAME_FONT, ColorPalette.CHINA_DOLL));
+
+        // 3. Gelar
+        content.add(createDataLabel("🏆 " + getGelarForRank(rank), COL_WIDTHS[2], ROW_DETAIL_FONT, ColorPalette.DUSTY_ROSE));
+
+        // 4. Skor
+        JLabel scoreLbl = createDataLabel(String.valueOf(s.getScore()), COL_WIDTHS[3], ROW_NAME_FONT, ColorPalette.CHINA_DOLL);
+        content.add(scoreLbl);
+
+        // 5. Waktu
+        String timeStr = String.format("%d:%02d", s.getTimeTaken() / 60, s.getTimeTaken() % 60);
+        content.add(createDataLabel(timeStr, COL_WIDTHS[4], ROW_DETAIL_FONT, ColorPalette.ROSEWATER));
+
+        // 6. Tanggal
+        String dateStr = (s.getAttemptedAt() != null) ? new java.text.SimpleDateFormat("dd/MM/yy").format(s.getAttemptedAt()) : "-";
+        content.add(createDataLabel(dateStr, COL_WIDTHS[5], ROW_DETAIL_FONT, new Color(216, 166, 148, 100)));
+
+        row.add(content);
+        return row;
     }
-    
-    private JLabel createDataLabel(String text, int width, int alignment) {
-        JLabel label = new JLabel(text, alignment);
-        label.setFont(DATA_FONT);
-        label.setForeground(TEXT_COLOR);
-        label.setPreferredSize(new Dimension(width, 20));
-        label.setMinimumSize(new Dimension(width, 20));
-        label.setMaximumSize(new Dimension(width, 20));
-        return label;
-    }
-    
+
     private JPanel createEmptyRow(int rank) {
-        JPanel rowPanel = new JPanel();
-        rowPanel.setLayout(new BoxLayout(rowPanel, BoxLayout.X_AXIS));
-        rowPanel.setPreferredSize(new Dimension(ROW_SIZE.width, ROW_SIZE.height));
-        rowPanel.setMaximumSize(new Dimension(ROW_SIZE.width, ROW_SIZE.height));
+        JPanel row = new JPanel();
+        row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
+        row.setOpaque(false);
+
+        JPanel rankWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 8));
+        rankWrapper.setOpaque(false);
+        setFixedSize(rankWrapper, COL_WIDTHS[0]);
         
-        // Alternating row colors
-        if (rank % 2 == 0) {
-            rowPanel.setBackground(ROW_EVEN_COLOR);
-        } else {
-            rowPanel.setBackground(ROW_ODD_COLOR);
+        RankIconPanel icon = new RankIconPanel(rank);
+        icon.setPreferredSize(new Dimension(32, 32));
+        rankWrapper.add(icon);
+        row.add(rankWrapper);
+        
+        JLabel dash = new JLabel("-");
+        dash.setFont(ROW_DETAIL_FONT);
+        dash.setForeground(new Color(255, 255, 255, 30));
+        row.add(dash);
+
+        return row;
+    }
+
+    // Helper untuk memaksa ukuran komponen
+    private void setFixedSize(JComponent c, int width) {
+        Dimension d = new Dimension(width, 50);
+        c.setPreferredSize(d);
+        c.setMinimumSize(d);
+        c.setMaximumSize(d);
+    }
+
+    private JLabel createDataLabel(String text, int width, Font font, Color color) {
+        JLabel lbl = new JLabel(text);
+        lbl.setFont(font);
+        lbl.setForeground(color);
+        // Pakai setFixedSize logic manual disini
+        Dimension d = new Dimension(width, 40);
+        lbl.setPreferredSize(d);
+        lbl.setMinimumSize(d);
+        lbl.setMaximumSize(d);
+        return lbl;
+    }
+
+    private String getGelarForRank(int r) {
+        return switch (r) {
+            case 1 -> "Sang Proklamator";
+            case 2 -> "Pahlawan Rengasdengklok";
+            case 3 -> "Pembela Republik";
+            case 4 -> "Aktivis Pergerakan";
+            case 5 -> "Simpatisan Kemerdekaan";
+            case 6 -> "Pemuda Revolusioner";
+            case 7 -> "Pejuang Muda";
+            case 8 -> "Patriot Sejati";
+            case 9 -> "Pemerhati Sejarah";
+            case 10 -> "Pewaris Semangat";
+            default -> "-";
+        };
+    }
+
+    //HELPER CLASSES
+
+    class BackButton extends JButton {
+        public BackButton(String text) {
+            super(text);
+            setContentAreaFilled(false);
+            setFocusPainted(false);
+            setBorderPainted(false);
+            setForeground(ColorPalette.PLUM_WINE);
+            setFont(new Font("SansSerif", Font.BOLD, 12));
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
         }
-        
-        rowPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(0xE8, 0xDC, 0xC8)),
-            BorderFactory.createEmptyBorder(5, 15, 5, 15)
-        ));
-        
-        // Rank
-        JLabel rankLabel = createDataLabel(String.valueOf(rank), COLUMN_WIDTHS[0], JLabel.CENTER);
-        rankLabel.setForeground(new Color(0x99, 0x99, 0x99));
-        
-        // Empty data
-        JLabel emptyLabel = createDataLabel("-", 
-            COLUMN_WIDTHS[1] + COLUMN_WIDTHS[2] + COLUMN_WIDTHS[3] + COLUMN_WIDTHS[4] + 20, 
-            JLabel.CENTER);
-        emptyLabel.setForeground(new Color(0x99, 0x99, 0x99));
-        emptyLabel.setFont(DATA_FONT.deriveFont(Font.ITALIC));
-        
-        rowPanel.add(rankLabel);
-        rowPanel.add(Box.createRigidArea(new Dimension(5, 0)));
-        rowPanel.add(emptyLabel);
-        
-        return rowPanel;
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.setColor(new Color(216, 166, 148, 200)); 
+            if (getModel().isRollover()) g2d.setColor(ColorPalette.CHINA_DOLL);
+            g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 40, 40);
+            super.paintComponent(g);
+        }
+    }
+
+    class OrnamentalDivider extends JPanel {
+        public OrnamentalDivider() { setOpaque(false); }
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int w = getWidth(); int cy = getHeight()/2;
+            Color lineColor = new Color(168, 106, 101);
+
+            GradientPaint leftGrad = new GradientPaint(0, cy, new Color(168, 106, 101, 0), w/2 - 15, cy, lineColor);
+            g2d.setPaint(leftGrad); g2d.setStroke(new BasicStroke(1.5f)); g2d.drawLine(0, cy, w/2 - 15, cy);
+
+            g2d.setColor(new Color(186, 84, 80));
+            int s = 6;
+            int[] x = { w/2, w/2 + s, w/2, w/2 - s };
+            int[] y = { cy - s, cy, cy + s, cy };
+            g2d.fillPolygon(x, y, 4);
+
+            GradientPaint rightGrad = new GradientPaint(w/2 + 15, cy, lineColor, w, cy, new Color(168, 106, 101, 0));
+            g2d.setPaint(rightGrad); g2d.drawLine(w/2 + 15, cy, w, cy);
+        }
+    }
+
+    class RankIconPanel extends JPanel {
+        int rank;
+        public RankIconPanel(int rank) { this.rank = rank; setOpaque(false); }
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int d = 32; 
+            Color circleColor; String symbol = String.valueOf(rank); Color textColor = Color.WHITE;
+
+            if (rank == 1) { circleColor = new Color(255, 193, 7); symbol = "♔"; textColor = new Color(120, 80, 0); }
+            else if (rank == 2) { circleColor = new Color(192, 192, 192); symbol = "♕"; textColor = Color.DARK_GRAY; }
+            else if (rank == 3) { circleColor = new Color(205, 127, 50); symbol = "V"; }
+            else { 
+                circleColor = new Color(255, 255, 255, 20); textColor = new Color(255, 255, 255, 150);
+                g2d.setColor(new Color(255, 255, 255, 40)); g2d.setStroke(new BasicStroke(1f)); g2d.drawOval(0, 0, d-1, d-1);
+            }
+            if (rank <= 3) { g2d.setColor(circleColor); g2d.fillOval(0, 0, d, d); }
+            else { g2d.setColor(circleColor); g2d.fillOval(0, 0, d, d); }
+
+            g2d.setColor(textColor); g2d.setFont(new Font("SansSerif", Font.BOLD, rank <= 3 ? 18 : 12));
+            FontMetrics fm = g2d.getFontMetrics();
+            g2d.drawString(symbol, (d - fm.stringWidth(symbol)) / 2, ((d - fm.getHeight()) / 2) + fm.getAscent() - (rank==1?2:0));
+        }
+    }
+
+    class FooterPanel extends JPanel {
+        public FooterPanel() { setOpaque(false); }
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int cx = getWidth()/2; int cy = 15;
+            GradientPaint l = new GradientPaint(cx-120, cy, new Color(168,106,101,0), cx-60, cy, ColorPalette.COPPER_ROSE);
+            g2d.setPaint(l); g2d.drawLine(cx-120, cy, cx-60, cy);
+            g2d.setColor(ColorPalette.ROSEWATER); g2d.setFont(new Font("Georgia", Font.PLAIN, 12));
+            String txt = "Indonesia Merdeka • 1945";
+            g2d.drawString(txt, cx - g2d.getFontMetrics().stringWidth(txt)/2, cy+4);
+            GradientPaint r = new GradientPaint(cx+60, cy, ColorPalette.COPPER_ROSE, cx+120, cy, new Color(168,106,101,0));
+            g2d.setPaint(r); g2d.drawLine(cx+60, cy, cx+120, cy);
+        }
     }
 }

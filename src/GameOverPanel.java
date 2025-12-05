@@ -170,13 +170,24 @@ public class GameOverPanel extends JPanel {
 
         //fungsi untuk membuat semua komponen dalam modal game over
     private void initComponents() {
-        int w = 1024;  //lebar default panel
-        int h = 768;   //tinggi default panel
-        int modalY = (h - 600) / 2; //posisi modal di tengah vertikal
+        int w = 1024;        // lebar panel
+        int h = 768;         // tinggi panel
+
+        int mw = 700;        // lebar modal (sama seperti di paintComponent)
+        int mh = 600;        // tinggi modal
+
+        int mx = (w - mw) / 2;   // posisi modal di tengah horizontal
+        int modalY = (h - mh) / 2; 
+
 
         //ikon jam dekoratif di atas judul
         ClockIcon clock = new ClockIcon();
-        clock.setBounds((w - 60) / 2, modalY + 50, 60, 60);
+        int clockSize = 100;
+        int clockX = mx + (mw - clockSize) / 2;  // titik tengah modal
+        int clockY = modalY + 40;                // naikkan sedikit biar simetris
+
+clock.setBounds(clockX, clockY, clockSize, clockSize);
+
         add(clock);
 
         //label judul ending (besar)
@@ -357,7 +368,7 @@ public class GameOverPanel extends JPanel {
 
         //kelas untuk ikon jam kecil sebagai dekorasi di atas judul ending
     class ClockIcon extends JPanel {
-
+        private Image clockIcon = new ImageIcon("assets/Icon/clock_icon.png").getImage();
         public ClockIcon() {
             setOpaque(false); //biar background panel transparan
         }
@@ -372,25 +383,9 @@ public class GameOverPanel extends JPanel {
                 RenderingHints.VALUE_ANTIALIAS_ON
             );
 
-            int w = getWidth();
-            int h = getHeight();
+            int size = Math.min(getWidth(), getHeight());
+            g2d.drawImage(clockIcon, 0, 0, size, size, null);
 
-            int cx = w / 2; //titik tengah x
-            int cy = h / 2; //titik tengah y
-            int r  = 28;    //radius jam
-
-            //lingkaran jam warna gelap
-            g2d.setColor(new Color(70, 50, 50));
-            g2d.fillOval(cx - r, cy - r, r * 2, r * 2);
-
-            //border jam warna copper rose muda
-            g2d.setColor(new Color(160, 110, 100));
-            g2d.setStroke(new BasicStroke(2f));
-            g2d.drawOval(cx - r, cy - r, r * 2, r * 2);
-
-            //jarum jam pendek dan panjang (posisi static untuk dekorasi)
-            g2d.drawLine(cx, cy, cx,     cy - 14); //jarum menit
-            g2d.drawLine(cx, cy, cx + 10, cy);     //jarum jam
         }
     }
 
