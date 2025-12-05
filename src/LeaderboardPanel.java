@@ -1,12 +1,13 @@
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
+import java.awt.geom.*;
 import java.awt.image.BufferedImage;
+import java.util.List;
 
 public class LeaderboardPanel extends JPanel {
     private RengasdengklokGame mainApp;
-    private JButton backButton;
     private JPanel dataPanel;
+    private JButton backButton;
     
     // Warna dari MainMenuPanel
     private final Color DARK_BG_1 = new Color(0x30, 0x2A, 0x28);
@@ -107,7 +108,7 @@ public class LeaderboardPanel extends JPanel {
         g2d.fillOval(0, 0, w, h);
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
     }
-    
+
     public void onPanelShown() {
         loadLeaderboard();
     }

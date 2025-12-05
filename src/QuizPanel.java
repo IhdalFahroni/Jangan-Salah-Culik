@@ -4,9 +4,11 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 
 public class QuizPanel extends JPanel {
+
     private RengasdengklokGame mainApp;
     private QuizManager quizManager;
-    
+
+    // Thread dan timer
     private Thread countdownThread;
     private Thread quizTimerThread;
     private final Object threadLock = new Object();
@@ -47,7 +49,8 @@ public class QuizPanel extends JPanel {
         generateNoiseTexture();
         initializeUI();
     }
-    
+
+    // dipanggil waktu panel ini ditampilkan
     public void onPanelShown() {
         resetQuiz();
     }
@@ -402,7 +405,7 @@ public class QuizPanel extends JPanel {
 
         return button;
     }
-    
+
     private void confirmFinishQuiz() {
         int result = JOptionPane.showConfirmDialog(
             this,
@@ -543,7 +546,9 @@ public class QuizPanel extends JPanel {
         resultPanel.add(resultContent);
         add(resultPanel);
     }
-    
+
+    //COUNTDOWN OVERLAY
+
     private void createCountdownOverlay() {
         countdownPanel = new JPanel(new GridBagLayout());
         countdownPanel.setBounds(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -576,10 +581,12 @@ public class QuizPanel extends JPanel {
         
         add(countdownPanel);
     }
-    
+
+    //LOGIKA QUIZ
+
     private void resetQuiz() {
         stopAllThreads();
-        
+
         timeLeft = 180;
         countdown = 3;
         
@@ -593,7 +600,7 @@ public class QuizPanel extends JPanel {
         
         startCountdown();
     }
-    
+
     private void startCountdown() {
         countDownThreadRunning = true;
         countdownThread = new Thread(() -> {
@@ -621,16 +628,16 @@ public class QuizPanel extends JPanel {
         });
         countdownThread.start();
     }
-    
+
     private void startQuiz() {
         quizContentPanel.setVisible(true);
         quizManager.startQuiz(15);
         startTime = System.currentTimeMillis();
-        
+
         startQuizTimer();
         updateQuestionDisplay();
     }
-    
+
     private void startQuizTimer() {
         quizTimerRunning = true;
         quizTimerThread = new Thread(() -> {
@@ -642,11 +649,9 @@ public class QuizPanel extends JPanel {
                         if (timerBar != null) timerBar.repaint();
                     });
                 }
-                
+
                 if (quizTimerRunning && timeLeft <= 0) {
-                    SwingUtilities.invokeLater(() -> {
-                        finishQuiz();
-                    });
+                    SwingUtilities.invokeLater(this::finishQuiz);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -654,7 +659,7 @@ public class QuizPanel extends JPanel {
         });
         quizTimerThread.start();
     }
-    
+
     private void updateQuestionDisplay() {
         if (quizManager.getCurrentQuestion() != null) {
             Question currentQuestion = quizManager.getCurrentQuestion();
@@ -666,7 +671,7 @@ public class QuizPanel extends JPanel {
             optionB.setText("B. " + currentQuestion.getOptionB());
             optionC.setText("C. " + (currentQuestion.getOptionC() != null ? currentQuestion.getOptionC() : ""));
             optionD.setText("D. " + (currentQuestion.getOptionD() != null ? currentQuestion.getOptionD() : ""));
-            
+
             optionC.setVisible(currentQuestion.getOptionC() != null);
             optionD.setVisible(currentQuestion.getOptionD() != null);
             
@@ -676,8 +681,7 @@ public class QuizPanel extends JPanel {
             // navigation buttons
             prevButton.setEnabled(quizManager.getCurrentQuestionIndex() > 0);
             nextButton.setEnabled(quizManager.getCurrentQuestionIndex() < quizManager.getTotalQuestions() - 1);
-            
-            // Reset options dan set jawaban yang sudah dipilih sebelumnya
+
             optionsGroup.clearSelection();
             String userAnswer = quizManager.getUserAnswerForCurrentQuestion();
             if (!userAnswer.isEmpty()) {
@@ -690,27 +694,27 @@ public class QuizPanel extends JPanel {
             }
         }
     }
-    
+
     private void moveToNextQuestion() {
         if (quizManager.getCurrentQuestionIndex() < quizManager.getTotalQuestions() - 1) {
             quizManager.moveToNextQuestion();
             updateQuestionDisplay();
         }
     }
-    
+
     private void moveToPreviousQuestion() {
         if (quizManager.getCurrentQuestionIndex() > 0) {
             quizManager.moveToPreviousQuestion();
             updateQuestionDisplay();
         }
     }
-    
+
     private void finishQuiz() {
         stopAllThreads();
         
         quizContentPanel.setVisible(false);
         resultPanel.setVisible(true);
-        
+
         int score = quizManager.calculateScore();
         int totalQuestions = quizManager.getTotalQuestions();
         
@@ -732,17 +736,19 @@ public class QuizPanel extends JPanel {
         boolean saved = quizManager.saveQuizResults(
             mainApp.getCurrentUserId()
         );
-        
+
         if (!saved) {
             System.err.println("Failed to save quiz results to database.");
         }
     }
-    
+
+    //THREAD CONTROL 
+
     public void stopAllThreads() {
         synchronized (threadLock) {
             countDownThreadRunning = false;
             quizTimerRunning = false;
-            
+
             if (countdownThread != null && countdownThread.isAlive()) {
                 countdownThread.interrupt();
             }
@@ -751,7 +757,7 @@ public class QuizPanel extends JPanel {
             }
         }
     }
-    
+
     @Override
     public void removeNotify() {
         stopAllThreads();
