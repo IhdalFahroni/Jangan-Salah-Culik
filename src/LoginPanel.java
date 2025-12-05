@@ -11,7 +11,7 @@ public class LoginPanel extends BaseGamePanel {
     //komponen input dan tombol ui
     private JTextField usernameField;
     private JPasswordField passwordField;
-    private boolean isLoginMode = true; //penanda lagi mode masuk atau daftar
+    private boolean isLoginMode = true;
     private JButton loginTab;
     private JButton registerTab;
     private JButton maleButton;
@@ -56,7 +56,7 @@ public class LoginPanel extends BaseGamePanel {
         int w = getWidth();
         int h = getHeight();
 
-        // 2. Gambar Efek Glow Khusus LoginPanel (Kode asli Anda)
+        // 2. Gambar Efek Glow Khusus LoginPanel
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.1f));
         int glowSize = 384;
         RadialGradientPaint glow = new RadialGradientPaint(
