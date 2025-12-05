@@ -49,7 +49,7 @@ public class MainMenuPanel extends BaseGamePanel {
         add(logoutButton);
 
         //divider ornamen atas judul
-        OrnamentalDivider dividerTop = new OrnamentalDivider();
+        LoginPanel.OrnamentalDivider dividerTop = new LoginPanel.OrnamentalDivider();
         dividerTop.setBounds((WINDOW_WIDTH - 280) / 2, 130, 280, 8);
         add(dividerTop);
 
@@ -61,7 +61,7 @@ public class MainMenuPanel extends BaseGamePanel {
         add(titleLabel);
 
         //divider ornamen bawah judul
-        OrnamentalDivider dividerBottom = new OrnamentalDivider();
+        LoginPanel.OrnamentalDivider dividerBottom = new LoginPanel.OrnamentalDivider();
         dividerBottom.setBounds((WINDOW_WIDTH - 50) / 2, 238, 50, 8);
         add(dividerBottom);
 
@@ -118,7 +118,7 @@ public class MainMenuPanel extends BaseGamePanel {
         add(leaderboardButton);
 
         //footer tulisan di bawah (sama seperti login panel)
-        FooterPanel footer = new FooterPanel();
+        LoginPanel.FooterPanel footer = new LoginPanel.FooterPanel();
         footer.setBounds(0, WINDOW_HEIGHT - 70, WINDOW_WIDTH, 30);
         add(footer);
     }
@@ -362,109 +362,6 @@ public class MainMenuPanel extends BaseGamePanel {
             g2d.setColor(ColorPalette.CHINA_DOLL);
             g2d.setFont(new Font("SansSerif", Font.PLAIN, 24));
             g2d.drawString("→", w - 50, h / 2 + 8);
-        }
-    }
-
-        //garis ornamen dekoratif (dipakai atas dan bawah judul)
-    class OrnamentalDivider extends JPanel {
-
-        public OrnamentalDivider() {
-            setOpaque(false); //biar background panel transparan
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-
-            Graphics2D g2d = (Graphics2D) g;
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            int w = getWidth();
-            int centerX = w / 2;
-            int centerY = 4;
-
-            Color lineColor = new Color(168, 106, 101);
-
-            //gradasi garis kiri
-            GradientPaint leftGrad = new GradientPaint(
-                0, centerY,
-                new Color(168, 106, 101, 0),
-                centerX - 24, centerY,
-                lineColor
-            );
-            g2d.setPaint(leftGrad);
-            g2d.setStroke(new BasicStroke(1.5f));
-            g2d.drawLine(0, centerY, centerX - 24, centerY);
-
-            //diamond kecil di tengah
-            g2d.setColor(new Color(186, 84, 80));
-            int s = 6;
-            int[] x = { centerX, centerX + s/2, centerX, centerX - s/2 };
-            int[] y = { centerY - s/2, centerY, centerY + s/2, centerY };
-            g2d.fillPolygon(x, y, 4);
-
-            //gradasi garis kanan
-            GradientPaint rightGrad = new GradientPaint(
-                centerX + 24, centerY,
-                lineColor,
-                w, centerY,
-                new Color(168, 106, 101, 0)
-            );
-            g2d.setPaint(rightGrad);
-            g2d.drawLine(centerX + 24, centerY, w, centerY);
-        }
-    }
-
-    //footer dekoratif di bawah (sama seperti login panel)
-    class FooterPanel extends JPanel {
-
-        public FooterPanel() {
-            setOpaque(false); //tanpa background
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-
-            Graphics2D g2d = (Graphics2D) g;
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-
-            int centerX = getWidth() / 2;
-            int centerY = getHeight() / 2;
-
-            Color lineColor = new Color(168, 106, 101);
-
-            //gradasi garis kiri
-            GradientPaint leftGrad = new GradientPaint(
-                centerX - 180, centerY,
-                new Color(168, 106, 101, 0),
-                centerX - 80, centerY,
-                lineColor
-            );
-            g2d.setPaint(leftGrad);
-            g2d.setStroke(new BasicStroke(1.5f));
-            g2d.drawLine(centerX - 180, centerY, centerX - 80, centerY);
-
-            //teks footer
-            g2d.setFont(new Font("Georgia", Font.PLAIN, 12));
-            g2d.setColor(ColorPalette.ROSEWATER);
-
-            String text = "Indonesia Merdeka • 1945";
-            FontMetrics fm = g2d.getFontMetrics();
-            int textWidth = fm.stringWidth(text);
-
-            g2d.drawString(text, centerX - textWidth / 2, centerY + 5);
-
-            //gradasi garis kanan
-            GradientPaint rightGrad = new GradientPaint(
-                centerX + 80, centerY,
-                lineColor,
-                centerX + 180, centerY,
-                new Color(168, 106, 101, 0)
-            );
-            g2d.setPaint(rightGrad);
-            g2d.drawLine(centerX + 80, centerY, centerX + 180, centerY);
         }
     }
 }

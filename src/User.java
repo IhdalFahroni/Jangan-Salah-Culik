@@ -7,20 +7,6 @@ public class User {
     private String password;
     private Date createdAt;
     
-    public boolean login() {
-        // TODO: Implement login logic
-        return false;
-    }
-    
-    public boolean register() {
-        // TODO: Implement registration logic
-        return false;
-    }
-    
-    public void updateProfile() {
-        // TODO: Implement profile update logic
-    }
-    
     // Getters and Setters
     public int getUserId() { return userId; }
     public void setUserId(int userId) { this.userId = userId; }

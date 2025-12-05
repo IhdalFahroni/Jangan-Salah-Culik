@@ -19,13 +19,6 @@ public class QuizPanel extends BaseGamePanel {
     private volatile boolean quizTimerRunning = false;
     private long startTime;
     
-    // Color palette nya tak samain sm yang di main menu panel
-    private final Color DARK_BG_1 = new Color(0x30, 0x2A, 0x28);
-    private final Color DARK_BG_3 = new Color(0x42, 0x38, 0x36);
-    private final Color CHINA_DOLL = new Color(0xE0, 0xCB, 0xB9);
-    private final Color ROSEWATER = new Color(0xF2, 0xD5, 0xC9);
-    private final Color ACCENT_RED = new Color(0xA8, 0x6A, 0x65);
-    
     private static final int WINDOW_WIDTH = 1024;
     private static final int WINDOW_HEIGHT = 768;
     private static final int TOTAL_TIME = 180;
@@ -75,14 +68,14 @@ public class QuizPanel extends BaseGamePanel {
         // Judul Kuis 
         JLabel titleLabel = new JLabel("Kuis Uji Pemahaman", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Georgia", Font.BOLD, 36));
-        titleLabel.setForeground(CHINA_DOLL);
+        titleLabel.setForeground(ColorPalette.CHINA_DOLL);
         titleLabel.setBounds(0, 0, 900, 40);
         quizContentPanel.add(titleLabel);
         
         // Subtitle judul
         JLabel subtitleLabel = new JLabel("Uji pengetahuan sejarah Rengasdengklok Anda", SwingConstants.CENTER);
         subtitleLabel.setFont(new Font("Georgia", Font.ITALIC, 14));
-        subtitleLabel.setForeground(ROSEWATER);
+        subtitleLabel.setForeground(ColorPalette.ROSEWATER);
         subtitleLabel.setBounds(0, 42, 900, 22);
         quizContentPanel.add(subtitleLabel);
 
@@ -112,7 +105,7 @@ public class QuizPanel extends BaseGamePanel {
         
         questionNumberLabel = new JLabel("Pertanyaan 1 dari 15", SwingConstants.CENTER);
         questionNumberLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        questionNumberLabel.setForeground(CHINA_DOLL);
+        questionNumberLabel.setForeground(ColorPalette.CHINA_DOLL);
         questionNumberPanel.add(questionNumberLabel, BorderLayout.CENTER);
         quizContentPanel.add(questionNumberPanel);
         
@@ -134,7 +127,7 @@ public class QuizPanel extends BaseGamePanel {
                 // ngisi sesuai waktu
                 double frac = Math.max(0.0, Math.min(1.0, (double) timeLeft / TOTAL_TIME));
                 int fillW = (int) Math.round(frac * w);
-                GradientPaint gp = new GradientPaint(0, 0, ACCENT_RED, Math.max(1, w), 0, new Color(0x75, 0x4B, 0x4D));
+                GradientPaint gp = new GradientPaint(0, 0, ColorPalette.ACCENT_RED, Math.max(1, w), 0, new Color(0x75, 0x4B, 0x4D));
                 g2d.setPaint(gp);
                 if (fillW > 0) {
                     g2d.fillRoundRect(0, 0, fillW, h, h, h);
@@ -173,7 +166,7 @@ public class QuizPanel extends BaseGamePanel {
         questionTextLabel.setBounds(40, 15, 820, 60);
         questionTextLabel.setFont(new Font("Georgia", Font.PLAIN, 20));
         //warna soal krim
-        questionTextLabel.setForeground(CHINA_DOLL);
+        questionTextLabel.setForeground(ColorPalette.CHINA_DOLL);
         questionTextLabel.setVerticalAlignment(SwingConstants.TOP);
         contentPanel.add(questionTextLabel);
         
@@ -262,7 +255,7 @@ public class QuizPanel extends BaseGamePanel {
         };
         
         button.setFont(new Font("Georgia", Font.BOLD, 14));
-        button.setForeground(CHINA_DOLL);
+        button.setForeground(ColorPalette.CHINA_DOLL);
         button.setContentAreaFilled(false);
         button.setBorderPainted(false);
         button.setFocusPainted(false);
@@ -288,7 +281,7 @@ public class QuizPanel extends BaseGamePanel {
 
                 // Background
                 if (isSelected()) {
-                    GradientPaint sel = new GradientPaint(0, 0, ACCENT_RED, 0, h, new Color(0x75, 0x4B, 0x4D));
+                    GradientPaint sel = new GradientPaint(0, 0, ColorPalette.ACCENT_RED, 0, h, new Color(0x75, 0x4B, 0x4D));
                     g2d.setPaint(sel);
                 } else {
                     g2d.setColor(new Color(0x3A, 0x34, 0x32));
@@ -302,7 +295,7 @@ public class QuizPanel extends BaseGamePanel {
 
                 // label teks
                 g2d.setFont(getFont());
-                g2d.setColor(CHINA_DOLL);
+                g2d.setColor(ColorPalette.CHINA_DOLL);
                 FontMetrics fm = g2d.getFontMetrics();
                 String text = getText();
                 if (text != null) {
@@ -314,7 +307,7 @@ public class QuizPanel extends BaseGamePanel {
         };
 
         button.setFont(new Font("Georgia", Font.BOLD, 20)); 
-        button.setForeground(CHINA_DOLL);
+        button.setForeground(ColorPalette.CHINA_DOLL);
         button.setOpaque(false);
         button.setContentAreaFilled(false);
         button.setBorderPainted(false);
@@ -419,7 +412,7 @@ public class QuizPanel extends BaseGamePanel {
                 
                 // Gradient merah untuk skor
                 GradientPaint gp = new GradientPaint(
-                    0, 0, ACCENT_RED,
+                    0, 0, ColorPalette.ACCENT_RED,
                     0, getHeight(), new Color(0x75, 0x4B, 0x4D)
                 );
                 g2d.setPaint(gp);
@@ -444,7 +437,7 @@ public class QuizPanel extends BaseGamePanel {
         
         resultScore = new JLabel("", SwingConstants.CENTER);
         resultScore.setFont(new Font("Georgia", Font.BOLD, 56));
-        resultScore.setForeground(CHINA_DOLL);
+        resultScore.setForeground(ColorPalette.CHINA_DOLL);
         scoreInnerPanel.add(resultScore, BorderLayout.CENTER);
         
         // Label tambahan untuk format skor
@@ -513,7 +506,7 @@ public class QuizPanel extends BaseGamePanel {
         // Label "Bersiap..." 
         countdownLabel = new JLabel("Bersiap...", JLabel.CENTER);
         countdownLabel.setFont(new Font("Georgia", Font.BOLD, 48));
-        countdownLabel.setForeground(CHINA_DOLL);
+        countdownLabel.setForeground(ColorPalette.CHINA_DOLL);
         gbc.gridy = 0;
         gbc.insets = new Insets(0, 0, 0, 0); 
         countdownPanel.add(countdownLabel, gbc);
@@ -521,7 +514,7 @@ public class QuizPanel extends BaseGamePanel {
         // Label angka countdown 
         countdownNumber = new JLabel("3", JLabel.CENTER);
         countdownNumber.setFont(new Font("Georgia", Font.BOLD, 120));
-        countdownNumber.setForeground(ACCENT_RED);
+        countdownNumber.setForeground(ColorPalette.ACCENT_RED);
         gbc.gridy = 1;
         gbc.insets = new Insets(-12, 0, 0, 0); 
         countdownPanel.add(countdownNumber, gbc);

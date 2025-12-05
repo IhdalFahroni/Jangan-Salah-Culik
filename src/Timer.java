@@ -1,5 +1,4 @@
-
-public class Timer implements Runnable {
+public abstract class Timer implements Runnable {
     private int timeRemaining;
     private boolean isRunning;
     private Thread timerThread;
@@ -51,7 +50,6 @@ public class Timer implements Runnable {
         return timeRemaining;
     }
 
-    // Getters and Setters
     public void setTimeRemaining(int timeRemaining) {
         this.timeRemaining = timeRemaining;
     }
@@ -64,11 +62,7 @@ public class Timer implements Runnable {
         isRunning = running;
     }
 
-    protected void onTick(int remainingSeconds) {
-        // Hook for subclasses
-    }
+    protected abstract void onTick(int remainingSeconds);
 
-    protected void onTimerFinished() {
-        // Hook for subclasses
-    }
+    protected abstract void onTimerFinished();
 }
