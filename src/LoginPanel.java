@@ -237,7 +237,7 @@ public class LoginPanel extends BaseGamePanel {
     }
 
     //garis hiasan kecil yang muncul di bawah judul
-    class OrnamentalDivider extends JPanel {
+    public static class OrnamentalDivider extends JPanel {
         public OrnamentalDivider() {
             setOpaque(false); //panel transparan karena hanya gambar garis
         }
@@ -282,7 +282,7 @@ public class LoginPanel extends BaseGamePanel {
     }
 
     //panel kecil di bagian paling bawah (footer)
-    class FooterPanel extends JPanel {
+    public static class FooterPanel extends JPanel {
         public FooterPanel() {
             setOpaque(false); //biar ga nutup background
         }

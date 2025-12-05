@@ -9,31 +9,6 @@ public class LeaderboardPanel extends BaseGamePanel {
     private JPanel dataPanel;
     private JButton backButton;
     
-    // Warna dari MainMenuPanel
-    private final Color DARK_BG_1 = new Color(0x30, 0x2A, 0x28);
-    private final Color DARK_BG_3 = new Color(0x42, 0x38, 0x36);
-    private final Color CHINA_DOLL = new Color(0xE0, 0xCB, 0xB9);
-    private final Color ROSEWATER = new Color(0xF2, 0xD5, 0xC9);
-    private final Color ACCENT_RED = new Color(0xA8, 0x6A, 0x65);
-    
-    // Warna tabel 
-    private final Color TABLE_BG = new Color(0x3A, 0x34, 0x32);
-    private final Color ROW_EVEN = new Color(0x40, 0x3A, 0x38);
-    private final Color ROW_ODD = new Color(0x3A, 0x34, 0x32);
-    private final Color ROW_HOVER = new Color(0x4A, 0x44, 0x42);
-    private final Color TEXT_LIGHT = new Color(0xE0, 0xCB, 0xB9);
-    private final Color TEXT_SOFT = new Color(0xD0, 0xBB, 0xA9);
-    
-    // Warna untuk top 3
-    private final Color GOLD_COLOR = new Color(0xFF, 0xE8, 0x6E); // Kuning
-    private final Color SILVER_COLOR = new Color(0xD1, 0xD5, 0xDB); // Silver 
-    private final Color BRONZE_COLOR = new Color(0xCD, 0x95, 0x6E); // Bronze 
-    
-    // Warna latar top 3 yang sesuai tema
-    private final Color GOLD_BG = new Color(0x4A, 0x3C, 0x20, 80);
-    private final Color SILVER_BG = new Color(0x3C, 0x3C, 0x3C, 80);
-    private final Color BRONZE_BG = new Color(0x3C, 0x28, 0x20, 80);
-    
     // Fonts
     private final Font SUBTITLE_FONT = new Font("Georgia", Font.ITALIC, 18);
     private final Font HEADER_FONT = new Font("Georgia", Font.BOLD, 14);
@@ -75,14 +50,14 @@ public class LeaderboardPanel extends BaseGamePanel {
         // Main Title
         JLabel titleLabel = new JLabel("# Leaderboard", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Georgia", Font.BOLD, 48));
-        titleLabel.setForeground(CHINA_DOLL);
+        titleLabel.setForeground(ColorPalette.CHINA_DOLL);
         titleLabel.setBounds(0, 0, 700, 60);
         titlePanel.add(titleLabel);
         
         // Subtitle
         JLabel subtitleLabel = new JLabel("Peringkat 10 Pemain Terbaik", SwingConstants.CENTER);
         subtitleLabel.setFont(SUBTITLE_FONT);
-        subtitleLabel.setForeground(ROSEWATER);
+        subtitleLabel.setForeground(ColorPalette.ROSEWATER);
         subtitleLabel.setBounds(0, 60, 700, 30);
         titlePanel.add(subtitleLabel);
         
@@ -106,11 +81,11 @@ public class LeaderboardPanel extends BaseGamePanel {
                 g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 
                 // Background dengan round corners - warna gelap sesuai tema
-                g2d.setColor(TABLE_BG);
+                g2d.setColor(ColorPalette.TABLE_BG);
                 g2d.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
                 
                 // Border dengan warna accent
-                g2d.setColor(ACCENT_RED);
+                g2d.setColor(ColorPalette.ACCENT_RED);
                 g2d.setStroke(new BasicStroke(3f));
                 g2d.drawRoundRect(1, 1, getWidth() - 3, getHeight() - 3, 15, 15);
                 
@@ -149,7 +124,7 @@ public class LeaderboardPanel extends BaseGamePanel {
         for (String header : headers) {
             JLabel headerLabel = new JLabel(header, SwingConstants.CENTER);
             headerLabel.setFont(HEADER_FONT);
-            headerLabel.setForeground(TEXT_LIGHT);
+            headerLabel.setForeground(ColorPalette.TEXT_LIGHT);
             headerLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
             headerPanel.add(headerLabel);
         }
@@ -158,7 +133,7 @@ public class LeaderboardPanel extends BaseGamePanel {
         dataPanel = new JPanel();
         dataPanel.setLayout(new BoxLayout(dataPanel, BoxLayout.Y_AXIS));
         dataPanel.setOpaque(false);
-        dataPanel.setBackground(TABLE_BG);
+        dataPanel.setBackground(ColorPalette.TABLE_BG);
         dataPanel.setBounds(20, 70, 860, 350);
         
         tablePanel.add(headerPanel, BorderLayout.NORTH);
@@ -169,7 +144,7 @@ public class LeaderboardPanel extends BaseGamePanel {
         // Footer text
         JLabel footerLabel = new JLabel("Saksikan sejarah dan kuis untuk meningkatkan peringkat", SwingConstants.CENTER);
         footerLabel.setFont(SUBTITLE_FONT);
-        footerLabel.setForeground(ROSEWATER);
+        footerLabel.setForeground(ColorPalette.ROSEWATER);
         footerLabel.setBounds(0, 650, WINDOW_WIDTH, 30);
         add(footerLabel);
     }
@@ -277,26 +252,26 @@ public class LeaderboardPanel extends BaseGamePanel {
         
         // Warna latar berdasarkan ranking
         Color backgroundColor;
-        Color textColor = TEXT_SOFT;
+        Color textColor = ColorPalette.TEXT_SOFT;
         
         switch (rank) {
             case 1:
-                backgroundColor = GOLD_BG;
-                textColor = GOLD_COLOR;
+                backgroundColor = ColorPalette.GOLD_BG;
+                textColor = ColorPalette.GOLD_COLOR;
                 break;
             case 2:
-                backgroundColor = SILVER_BG;
-                textColor = SILVER_COLOR;
+                backgroundColor = ColorPalette.SILVER_BG;
+                textColor = ColorPalette.SILVER_COLOR;
                 break;
             case 3:
-                backgroundColor = BRONZE_BG;
-                textColor = BRONZE_COLOR;
+                backgroundColor = ColorPalette.BRONZE_BG;
+                textColor = ColorPalette.BRONZE_COLOR;
                 break;
             default:
                 if (rank % 2 == 0) {
-                    backgroundColor = ROW_EVEN;
+                    backgroundColor = ColorPalette.ROW_EVEN;
                 } else {
-                    backgroundColor = ROW_ODD;
+                    backgroundColor = ColorPalette.ROW_ODD;
                 }
         }
         
@@ -323,13 +298,13 @@ public class LeaderboardPanel extends BaseGamePanel {
         // Warna teks berdasarkan rank
         switch (rank) {
             case 1:
-                rankLabel.setForeground(GOLD_COLOR);
+                rankLabel.setForeground(ColorPalette.GOLD_COLOR);
                 break;
             case 2:
-                rankLabel.setForeground(SILVER_COLOR);
+                rankLabel.setForeground(ColorPalette.SILVER_COLOR);
                 break;
             case 3:
-                rankLabel.setForeground(BRONZE_COLOR);
+                rankLabel.setForeground(ColorPalette.BRONZE_COLOR);
                 break;
             default:
                 rankLabel.setForeground(textColor);
@@ -356,13 +331,13 @@ public class LeaderboardPanel extends BaseGamePanel {
         
         // Warna skor
         if (skor >= 900) {
-            skorLabel.setForeground(GOLD_COLOR);
+            skorLabel.setForeground(ColorPalette.GOLD_COLOR);
         } else if (skor >= 700) {
-            skorLabel.setForeground(SILVER_COLOR);
+            skorLabel.setForeground(ColorPalette.SILVER_COLOR);
         } else if (skor >= 500) {
-            skorLabel.setForeground(BRONZE_COLOR);
+            skorLabel.setForeground(ColorPalette.BRONZE_COLOR);
         } else if (skor >= 300) {
-            skorLabel.setForeground(ACCENT_RED);
+            skorLabel.setForeground(ColorPalette.ACCENT_RED);
         } else {
             skorLabel.setForeground(textColor);
         }
@@ -372,15 +347,15 @@ public class LeaderboardPanel extends BaseGamePanel {
             rowPanel.addMouseListener(new java.awt.event.MouseAdapter() {
                 @Override
                 public void mouseEntered(java.awt.event.MouseEvent evt) {
-                    rowPanel.setBackground(ROW_HOVER);
+                    rowPanel.setBackground(ColorPalette.ROW_HOVER);
                 }
                 
                 @Override
                 public void mouseExited(java.awt.event.MouseEvent evt) {
                     if (rank % 2 == 0) {
-                        rowPanel.setBackground(ROW_EVEN);
+                        rowPanel.setBackground(ColorPalette.ROW_EVEN);
                     } else {
-                        rowPanel.setBackground(ROW_ODD);
+                        rowPanel.setBackground(ColorPalette.ROW_ODD);
                     }
                 }
             });
@@ -439,9 +414,9 @@ public class LeaderboardPanel extends BaseGamePanel {
         
         // Warna latar alternating
         if (rank % 2 == 0) {
-            rowPanel.setBackground(ROW_EVEN);
+            rowPanel.setBackground(ColorPalette.ROW_EVEN);
         } else {
-            rowPanel.setBackground(ROW_ODD);
+            rowPanel.setBackground(ColorPalette.ROW_ODD);
         }
         
         rowPanel.setBorder(BorderFactory.createCompoundBorder(

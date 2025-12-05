@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 public class DatabaseManager {
-    private static final String URL = "jdbc:mysql://127.0.0.1:3306/rengasdengklok_db";
+    private static final String URL = "jdbc:mysql://127.0.0.1:3307/rengasdengklok_db";
     private static final String USERNAME = "root"; 
     private static final String PASSWORD = ""; 
     
