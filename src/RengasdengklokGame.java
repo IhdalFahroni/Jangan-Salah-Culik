@@ -113,6 +113,9 @@ public class RengasdengklokGame {
                 if (quizPanel != null) {
                     quizPanel.onPanelShown();
                 }
+                if (audioManager != null) {
+                    audioManager.playBackgroundMusic("assets/Audio/RUSH E.wav", 1200);
+                }
                 break;
             case "STORY":
                 // Start background music for story with fade-in

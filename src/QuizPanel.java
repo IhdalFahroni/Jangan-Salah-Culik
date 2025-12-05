@@ -7,6 +7,7 @@ public class QuizPanel extends JPanel {
 
     private RengasdengklokGame mainApp;
     private QuizManager quizManager;
+    private AudioManager audioManager;
 
     // Thread dan timer
     private Thread countdownThread;
