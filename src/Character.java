@@ -6,15 +6,6 @@ public class Character {
     private String imagePath;
     private int currentRelationship;
     
-    public void displayCharacter() {
-        // TODO: Implement character display logic
-    }
-    
-    public void updateRelationship(int change) {
-        // TODO: Implement relationship update logic
-    }
-    
-    // Getters and Setters
     public int getCharacterId() { return characterId; }
     public void setCharacterId(int characterId) { this.characterId = characterId; }
     public String getCharacterName() { return characterName; }

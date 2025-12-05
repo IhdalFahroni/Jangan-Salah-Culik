@@ -7,6 +7,7 @@ public class ScoreEntry {
     private int score;
     private int timeTaken;
     private Date attemptedAt;
+    private int calculatedScore;
     
     // Getters and Setters
     public String getUsername() { return username; }
@@ -19,6 +20,8 @@ public class ScoreEntry {
     public void setTimeTaken(int timeTaken) { this.timeTaken = timeTaken; }
     public Date getAttemptedAt() { return attemptedAt; }
     public void setAttemptedAt(Date attemptedAt) { this.attemptedAt = attemptedAt; }
+    public int getCalculatedScore() { return calculatedScore; }  // calculated_score
+    public void setCalculatedScore(int calculatedScore) { this.calculatedScore = calculatedScore; }
     
     @Override
     public String toString() {

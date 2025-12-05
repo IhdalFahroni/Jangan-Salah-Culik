@@ -5,7 +5,6 @@ import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.*;
-import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
 
@@ -275,7 +274,7 @@ public class StoryPanel extends JPanel {
         //optional sinkronisasi kalau kamu mau pakai
     }
     //kelas tombol kecil buat balik ke menu
-    class MenuButton extends JButton {
+    static class MenuButton extends JButton {
         private boolean isHovered = false; //penanda mouse lagi di atas tombol atau tidak
 
         public MenuButton() {

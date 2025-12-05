@@ -14,6 +14,12 @@ public class QuizManager {
     private long startTime;
     private boolean quizCompleted;
     private DatabaseManager dbManager;
+
+    private static final int EASY_SCORE = 50;
+    private static final int MEDIUM_SCORE = 75;
+    private static final int HARD_SCORE = 100;
+    private static final int TIME_BONUS_PER_SECOND = 1;
+    private static final int MAX_TIME = 180;
     
     public QuizManager(DatabaseManager dbManager) {
         this.questions = new ArrayList<>();
@@ -22,6 +28,8 @@ public class QuizManager {
         this.score = 0;
         this.quizCompleted = false;
         this.dbManager = dbManager;
+        this.currentQuestionIndex = 0;
+        this.totalQuestions = 15; 
     }
     
     public void startQuiz(int totalQuestions) {
@@ -32,14 +40,22 @@ public class QuizManager {
         this.userAnswers.clear();
         this.startTime = System.currentTimeMillis();
         
-        // Load questions from database
-        questions = dbManager.loadQuestionsFromDatabase(totalQuestions);
+        // Load questions sesuai diffcituly
+        questions = dbManager.loadQuestionsWithDistribution();
         
         if (!questions.isEmpty() && questions.size() >= totalQuestions) {
             currentQuestion = questions.get(0);
         } else {
             System.err.println("Not enough questions in database!");
         }
+        
+        userAnswers.clear();
+        for (int i = 0; i < questions.size(); i++) {
+            userAnswers.put(questions.get(i), ""); // Inisialisasi jawaban kosong untuk setiap pertanyaan
+        }
+        
+        currentQuestionIndex = 0;
+        startTime = System.currentTimeMillis();
     }
     
     public void submitAnswer(String answer) {
@@ -72,12 +88,18 @@ public class QuizManager {
         this.quizCompleted = true;
     }
     
-    public boolean saveQuizResults(int userId, int profileId) {
-        int timeTaken = getTimeTaken();
-        boolean attemptSaved = dbManager.saveQuizAttempt(userId, score, totalQuestions, timeTaken);
-        boolean leaderboardUpdated = dbManager.updateLeaderboard(userId, profileId, score, timeTaken);
+    public boolean saveQuizResults(int userId) {
+        int rawScore = calculateScore(); // Untuk display di UI
+        int timeTaken = (int) ((System.currentTimeMillis() - startTime) / 1000);
+        int finalScore = calculateFinalScore(); // Untuk leaderboard
         
-        return attemptSaved || leaderboardUpdated; 
+        // Save quiz attempt (score mentah)
+        boolean attemptSaved = dbManager.saveQuizAttempt(userId, rawScore, totalQuestions, timeTaken);
+        
+        // Update leaderboard dengan score akhir
+        boolean leaderboardSaved = dbManager.updateLeaderboard(userId, rawScore, timeTaken, finalScore);
+        
+        return attemptSaved && leaderboardSaved;
     }
     
     public List<ScoreEntry> getTopScores(int limit) {
@@ -85,13 +107,79 @@ public class QuizManager {
     }
     
     public int calculateScore() {
-        return score;
+        int rawScore = 0;
+        for (int i = 0; i < questions.size(); i++) {
+            Question question = questions.get(i);
+            String userAnswer = userAnswers.get(question);
+            String correctAnswer = question.getCorrectAnswer();
+
+            if (userAnswer != null && userAnswer.equals(correctAnswer)) {
+                rawScore++;
+            }
+        }
+        
+        return rawScore;
     }
     
     public int getTimeTaken() {
         return (int)((System.currentTimeMillis() - startTime) / 1000);
     }
     
+    public int calculateFinalScore() {
+        int baseScore = 0;
+        
+        // Hitung base score berdasarkan difficulty
+        for (int i = 0; i < questions.size(); i++) {
+            Question question = questions.get(i);
+            String userAnswer = userAnswers.get(question);
+            String correctAnswer = question.getCorrectAnswer();
+
+            if (userAnswer != null && userAnswer.equals(correctAnswer)) {
+                String difficulty = question.getDifficulty() != null ? question.getDifficulty().toLowerCase() : "medium";
+
+                if (difficulty.equals("hard")) {
+                    baseScore += HARD_SCORE;
+                } else if (difficulty.equals("medium")) {
+                    baseScore += MEDIUM_SCORE;
+                } else if (difficulty.equals("easy")) {
+                    baseScore += EASY_SCORE;
+                } else {
+                    baseScore += MEDIUM_SCORE;
+                }
+            }
+        }
+        
+        // Hitung waktu
+        long endTime = System.currentTimeMillis();
+        int timeTaken = (int) ((endTime - startTime) / 1000);
+
+        // Normalisasi baseScore berdasarkan maksimal possible base untuk semua pertanyaan
+        int maxBase = 0;
+        for (Question q : questions) {
+            String diff = q.getDifficulty() != null ? q.getDifficulty().toLowerCase() : "medium";
+            if (diff.equals("hard")) maxBase += HARD_SCORE;
+            else if (diff.equals("medium")) maxBase += MEDIUM_SCORE;
+            else if (diff.equals("easy")) maxBase += EASY_SCORE;
+            else maxBase += MEDIUM_SCORE;
+        }
+
+        double normalizedBase = 0.0;
+        if (maxBase > 0) {
+            // max 800, sisanya berdasarkan cepet ap ndknya jawab soal
+            normalizedBase = ((double) baseScore / (double) maxBase) * 800.0;
+        }
+
+        // Hitung bonus waktu tetapi batasi agar tidak mendominasi (maks 200)
+        int timeBonus = 0;
+        if (timeTaken < MAX_TIME) {
+            timeBonus = Math.min((MAX_TIME - timeTaken) * TIME_BONUS_PER_SECOND, 200);
+        }
+
+        int finalScore = (int) Math.round(normalizedBase) + timeBonus;
+        return Math.min(finalScore, 1000);
+    }
+
+        
     public boolean isQuizCompleted() {
         return quizCompleted;
     }

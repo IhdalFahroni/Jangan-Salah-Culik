@@ -1,4 +1,3 @@
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -60,15 +59,8 @@ public class Choice {
         return relationshipImpact;
     }
 
-    public void setRelationshipImpact(Map<String, Integer> relationshipImpact) {
-        this.relationshipImpact = relationshipImpact;
-    }
-
     public int getRequiredTrustLevel() {
         return requiredTrustLevel;
     }
 
-    public void setRequiredTrustLevel(int requiredTrustLevel) {
-        this.requiredTrustLevel = requiredTrustLevel;
-    }
 }

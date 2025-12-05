@@ -45,7 +45,6 @@ CREATE TABLE `decisions` (
 CREATE TABLE `leaderboard` (
   `leaderboard_id` int NOT NULL,
   `user_id` int DEFAULT NULL,
-  `profile_id` int DEFAULT NULL,
   `score` int NOT NULL,
   `time_taken_seconds` int NOT NULL,
   `attempted_at` datetime DEFAULT CURRENT_TIMESTAMP
@@ -55,10 +54,10 @@ CREATE TABLE `leaderboard` (
 -- Dumping data for table `leaderboard`
 --
 
-INSERT INTO `leaderboard` (`leaderboard_id`, `user_id`, `profile_id`, `score`, `time_taken_seconds`, `attempted_at`) VALUES
-(1, 1, 1, 11, 97, '2025-11-23 15:19:18'),
-(2, 1, 1, 11, 122, '2025-11-23 15:29:10'),
-(3, 1, 1, 0, 5, '2025-11-23 19:17:23');
+INSERT INTO `leaderboard` (`leaderboard_id`, `user_id`, `score`, `time_taken_seconds`, `attempted_at`) VALUES
+(1, 1, 11, 97, '2025-11-23 15:19:18'),
+(2, 1, 11, 122, '2025-11-23 15:29:10'),
+(3, 1, 0, 5, '2025-11-23 19:17:23');
 
 -- --------------------------------------------------------
 
@@ -244,8 +243,7 @@ ALTER TABLE `decisions`
 --
 ALTER TABLE `leaderboard`
   ADD PRIMARY KEY (`leaderboard_id`),
-  ADD KEY `user_id` (`user_id`),
-  ADD KEY `profile_id` (`profile_id`);
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Indexes for table `profiles`
@@ -341,8 +339,7 @@ ALTER TABLE `decisions`
 -- Constraints for table `leaderboard`
 --
 ALTER TABLE `leaderboard`
-  ADD CONSTRAINT `leaderboard_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`),
-  ADD CONSTRAINT `leaderboard_ibfk_2` FOREIGN KEY (`profile_id`) REFERENCES `profiles` (`profile_id`);
+  ADD CONSTRAINT `leaderboard_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`);
 
 --
 -- Constraints for table `profiles`
@@ -361,6 +358,16 @@ ALTER TABLE `quiz_attempts`
 --
 ALTER TABLE `sessions`
   ADD CONSTRAINT `sessions_ibfk_1` FOREIGN KEY (`profile_id`) REFERENCES `profiles` (`profile_id`) ON DELETE CASCADE;
+COMMIT;
+
+-- Tambah kolom raw_score dan calculated_score
+ALTER TABLE `leaderboard` 
+  ADD COLUMN `calculated_score` INT DEFAULT 0;
+COMMIT;
+
+-- Update data existing
+UPDATE leaderboard 
+    `calculated_score` = `score` * 50; 
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

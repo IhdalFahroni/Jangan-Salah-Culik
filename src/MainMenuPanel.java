@@ -1,7 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 
 //panel utama untuk halaman menu setelah user login
@@ -176,7 +175,7 @@ public class MainMenuPanel extends JPanel {
         subtitleLabel.setBounds(0, 255, WINDOW_WIDTH, 35);
         add(subtitleLabel);
 
-                //ukuran tombol menu utama
+        //ukuran tombol menu utama
         int btnWidth = 588;
         int btnHeight = 78;
 

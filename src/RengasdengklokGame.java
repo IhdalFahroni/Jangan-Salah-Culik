@@ -105,6 +105,9 @@ public class RengasdengklokGame {
                 if (mainMenuPanel != null) {
                     mainMenuPanel.onPanelShown();
                 }
+                if (audioManager != null) {
+                    audioManager.stopBackgroundMusic(1200);
+                }
                 break;
             case "QUIZ":
                 if (quizPanel != null) {
@@ -112,7 +115,12 @@ public class RengasdengklokGame {
                 }
                 break;
             case "STORY":
-                // Story panel updates handled by UIManager/SceneManager
+                // Start background music for story with fade-in
+                if (audioManager != null) {
+                    audioManager.playBackgroundMusic("assets/Audio/tense music.wav", 1200);
+                }
+                break;
+            case "ENDING":
                 break;
         }
     }

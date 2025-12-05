@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DatabaseManager {
-    private static final String URL = "jdbc:mysql://127.0.0.1:3307/rengasdengklok_db";
+    private static final String URL = "jdbc:mysql://127.0.0.1:3306/rengasdengklok_db";
     private static final String USERNAME = "root"; 
     private static final String PASSWORD = ""; 
     
@@ -98,14 +98,15 @@ public class DatabaseManager {
         }
     }
     
-    // ambil soal dari database acak
-    public List<Question> loadQuestionsFromDatabase(int count) {
+    // ambil soal dari database dgn tingkat kesulitan sesuai d bagian distribution difficulty
+    public List<Question> loadQuestionsFromDatabase(String difficulty, int count) {
         List<Question> questions = new ArrayList<>();
         
-        String query = "SELECT * FROM questions ORDER BY RAND() LIMIT ?";
+        String query = "SELECT * FROM questions WHERE difficulty = ? ORDER BY RAND() LIMIT ?";
         
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setInt(1, count);
+            stmt.setString(1, difficulty);
+            stmt.setInt(2, count);
             ResultSet rs = stmt.executeQuery();
             
             while (rs.next()) {
@@ -119,16 +120,42 @@ public class DatabaseManager {
                 question.setOptionD(rs.getString("option_d")); 
                 
                 question.setCorrectAnswer(rs.getString("correct_answer"));
-                question.setDifficulty(rs.getString("difficulty"));
+                question.setDifficulty(rs.getString("difficulty")); // Simpan difficulty
                 question.setSceneReference(rs.getInt("scene_reference"));
                 
                 questions.add(question);
             }
             
-            System.out.println("Loaded " + questions.size() + " questions from database.");
-            
         } catch (SQLException e) {
-            System.err.println("Error loading questions: " + e.getMessage());
+            System.err.println("Error loading " + difficulty + " questions: " + e.getMessage());
+        }
+        
+        return questions;
+    }
+
+    public List<Question> loadQuestionsWithDistribution() {
+        List<Question> questions = new ArrayList<>();
+        
+        try {
+            // Ambil 5 soal Hard
+            List<Question> hardQuestions = loadQuestionsFromDatabase("Hard", 5);
+            
+            // Ambil 5 soal Medium
+            List<Question> mediumQuestions = loadQuestionsFromDatabase("Medium", 5);
+            
+            // Ambil 5 soal Easy
+            List<Question> easyQuestions = loadQuestionsFromDatabase("Easy", 5);
+            
+            // Gabungkan semua soal
+            questions.addAll(hardQuestions);
+            questions.addAll(mediumQuestions);
+            questions.addAll(easyQuestions);
+            
+            System.out.println("Loaded questions: " + hardQuestions.size() + " Hard, " + 
+                             mediumQuestions.size() + " Medium, " + easyQuestions.size() + " Easy");
+            
+        } catch (Exception e) {
+            System.err.println("Error loading questions with distribution: " + e.getMessage());
         }
         
         return questions;
@@ -152,14 +179,14 @@ public class DatabaseManager {
         }
     }
     
-    public boolean updateLeaderboard(int userId, int profileId, int score, int timeTaken) {
-        String query = "INSERT INTO leaderboard (user_id, profile_id, score, time_taken_seconds) VALUES (?, ?, ?, ?)";
+    public boolean updateLeaderboard(int userId, int score, int timeTaken, int calculatedScore) {
+        String query = "INSERT INTO leaderboard (user_id, score, time_taken_seconds, calculated_score) VALUES (?, ?, ?, ?)";
         
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, userId);
-            stmt.setInt(2, profileId);
-            stmt.setInt(3, score);
-            stmt.setInt(4, timeTaken);
+            stmt.setInt(2, score); // Score mentah (jumlah benar)
+            stmt.setInt(3, timeTaken); 
+            stmt.setInt(4, calculatedScore); // Score akhir setelah perhitungan
             
             int rowsAffected = stmt.executeUpdate();
             return rowsAffected > 0;
@@ -173,12 +200,16 @@ public class DatabaseManager {
     public List<ScoreEntry> getTopScores(int limit) {
         List<ScoreEntry> topScores = new ArrayList<>();
         
-        String query = "SELECT u.username, p.character_name, l.score, l.time_taken_seconds, l.attempted_at " +
-                      "FROM leaderboard l " +
-                      "JOIN users u ON l.user_id = u.user_id " +
-                      "JOIN profiles p ON l.profile_id = p.profile_id " +
-                      "ORDER BY l.score DESC, l.time_taken_seconds ASC " +
-                      "LIMIT ?";
+        // PERBAIKAN: Ambil calculated_score dari database
+        String query = "SELECT u.username, " +
+                    "l.score, " +           // raw score (jumlah benar)
+                    "l.calculated_score, " +    // calculated_score (skor akhir)
+                    "l.time_taken_seconds, " +
+                    "l.attempted_at " +
+                    "FROM leaderboard l " +
+                    "JOIN users u ON l.user_id = u.user_id " +
+                    "ORDER BY l.calculated_score DESC, l.time_taken_seconds ASC " +
+                    "LIMIT ?";
         
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setInt(1, limit);
@@ -187,8 +218,8 @@ public class DatabaseManager {
             while (rs.next()) {
                 ScoreEntry entry = new ScoreEntry();
                 entry.setUsername(rs.getString("username"));
-                entry.setCharacterName(rs.getString("character_name"));
-                entry.setScore(rs.getInt("score"));
+                entry.setScore(rs.getInt("score"));           // raw_score
+                entry.setCalculatedScore(rs.getInt("calculated_score")); // calculated_score
                 entry.setTimeTaken(rs.getInt("time_taken_seconds"));
                 entry.setAttemptedAt(rs.getTimestamp("attempted_at"));
                 

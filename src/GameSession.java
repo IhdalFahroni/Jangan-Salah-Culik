@@ -501,13 +501,24 @@ public class GameSession {
         }
         int userId = resolveComponentId("currentUserId", 0);
         int profileIdValue = profileId > 0 ? profileId : resolveComponentId("currentProfileId", 0);
-        if (userId <= 0 || profileIdValue <= 0) {
+        int sessionId = this.sessionId;
+        
+        if (userId <= 0 || profileIdValue <= 0 || sessionId <= 0) {
             return;
         }
-        int pemuda = relationships != null ? relationships.getOrDefault("PEMUDA", 50) : 50;
-        int finalScore = Math.max(0, relationshipSoekarno + relationshipHatta + trustLevel + pemuda);
-        int estimatedTime = Math.max(0, currentScene * 30); // approx seconds spent per scene
-        dbManager.updateLeaderboard(userId, profileIdValue, finalScore, estimatedTime);
+        
+        // 1. Save game progress
+        GameSession session = new GameSession();
+        session.setSessionId(sessionId);
+        session.setCurrentScene(currentScene);
+        session.setRelationshipSoekarno(relationshipSoekarno);
+        session.setRelationshipHatta(relationshipHatta);
+        session.setTrustLevel(trustLevel);
+        session.setEndingAchieved(endingAchieved);
+        
+        dbManager.saveGameProgress(session);
+        
+        System.out.println("Story result saved successfully.");
     }
 
     private void syncUiState(int countdownSeconds) {
