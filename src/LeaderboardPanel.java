@@ -4,7 +4,7 @@ import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.util.List;
 
-public class LeaderboardPanel extends JPanel {
+public class LeaderboardPanel extends BaseGamePanel {
     private RengasdengklokGame mainApp;
     private JPanel dataPanel;
     private JButton backButton;
@@ -53,60 +53,6 @@ public class LeaderboardPanel extends JPanel {
         setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
         generateNoiseTexture();
         initializeUI();
-    }
-    
-    private void generateNoiseTexture() {
-        noiseTexture = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = noiseTexture.createGraphics();
-        java.util.Random rand = new java.util.Random(12345);
-        
-        for (int y = 0; y < 100; y++) {
-            for (int x = 0; x < 100; x++) {
-                int noise = rand.nextInt(80) - 40;
-                int gray = 128 + noise;
-                gray = Math.max(0, Math.min(255, gray));
-                int alpha = 20;
-                noiseTexture.setRGB(x, y, new Color(gray, gray, gray, alpha).getRGB());
-            }
-        }
-        g.dispose();
-    }
-    
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        Graphics2D g2d = (Graphics2D) g;
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
-        int w = getWidth();
-        int h = getHeight();
-        
-        // Gradient background seperti MainMenuPanel
-        GradientPaint gradient = new GradientPaint(
-            0, 0, DARK_BG_1,
-            0, h, DARK_BG_3
-        );
-        g2d.setPaint(gradient);
-        g2d.fillRect(0, 0, w, h);
-        
-        // Noise texture
-        for (int y = 0; y < h; y += 100) {
-            for (int x = 0; x < w; x += 100) {
-                g2d.drawImage(noiseTexture, x, y, null);
-            }
-        }
-        
-        // Efek glow radial merah
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.1f));
-        RadialGradientPaint glow = new RadialGradientPaint(
-            w / 2, h / 2,
-            w / 2,
-            new float[]{0f, 1f},
-            new Color[]{new Color(168, 106, 101, 255), new Color(168, 106, 101, 0)}
-        );
-        g2d.setPaint(glow);
-        g2d.fillOval(0, 0, w, h);
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
     }
 
     public void onPanelShown() {

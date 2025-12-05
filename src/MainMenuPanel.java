@@ -4,7 +4,7 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 
 //panel utama untuk halaman menu setelah user login
-public class MainMenuPanel extends JPanel {
+public class MainMenuPanel extends BaseGamePanel {
     
     private RengasdengklokGame mainApp; //referensi ke aplikasi utama
 
@@ -13,22 +13,11 @@ public class MainMenuPanel extends JPanel {
     private IconButton logoutButton;
     private GreetingPill greetingPill;
 
-    private BufferedImage noiseTexture; //tekstur bintik untuk background
-
-    //ukuran panel mengikuti ukuran window utama
-    private static final int WINDOW_WIDTH = 1024;
-    private static final int WINDOW_HEIGHT = 768;
-
     //constructor dipanggil pas panel menu dibuat
     public MainMenuPanel(RengasdengklokGame mainApp) {
+        super(); // Panggil constructor BaseGamePanel (otomatis bikin noise & background)
         this.mainApp = mainApp;
-
-        setLayout(null); //pakai absolute layout biar bebas atur posisi
-        setBackground(ColorPalette.DARK_BG_1);
-        setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
-
-        generateNoiseTexture(); //bikin tekstur bintik untuk background
-        initComponents();       //atur semua tombol dan tulisan
+        initComponents();
     }
 
     //dipanggil setiap kali panel dibuka untuk update sapaan user
@@ -36,99 +25,7 @@ public class MainMenuPanel extends JPanel {
         updateGreeting();
     }
 
-    //buat tekstur noise (bintik-bintik lembut) untuk efek vintage
-    private void generateNoiseTexture() {
-        noiseTexture = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB);
-
-        Graphics2D g = noiseTexture.createGraphics();
-        java.util.Random rand = new java.util.Random(12345);
-
-        for (int y = 0; y < 100; y++) {
-            for (int x = 0; x < 100; x++) {
-
-                //random noise dari -40 sampai 40
-                int noise = rand.nextInt(80) - 40;
-
-                int gray = 128 + noise;
-                gray = Math.max(0, Math.min(255, gray)); //jaga biar tetap valid
-
-                int alpha = 20; //transparansi tipis
-
-                noiseTexture.setRGB(
-                    x, y,
-                    new Color(gray, gray, gray, alpha).getRGB()
-                );
-            }
-        }
-        g.dispose();
-    }
-
-        @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-
-        Graphics2D g2d = (Graphics2D) g;
-        //aktifkan antialiasing biar visual lebih halus
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        int w = getWidth();
-        int h = getHeight();
-
-        //gradient background dari warna gelap 1 → 2 → 3
-        Color[] gradColors = {
-            ColorPalette.DARK_BG_1,
-            ColorPalette.DARK_BG_2,
-            ColorPalette.DARK_BG_3
-        };
-
-        //gambar gradient vertical manual baris per baris
-        for (int y = 0; y < h; y++) {
-            float ratio = (float) y / h;
-
-            //tentukan dua warna pembentuk gradient lokal
-            Color c1 = (ratio < 0.5f) ? gradColors[0] : gradColors[1];
-            Color c2 = (ratio < 0.5f) ? gradColors[1] : gradColors[2];
-
-            //hitungan rasio dalam sub-gradient
-            float localRatio = (ratio < 0.5f) ? ratio * 2 : (ratio - 0.5f) * 2;
-
-            //hitung warna final gradient
-            int r = (int) (c1.getRed()   + (c2.getRed()   - c1.getRed())   * localRatio);
-            int gr= (int) (c1.getGreen() + (c2.getGreen() - c1.getGreen()) * localRatio);
-            int b = (int) (c1.getBlue()  + (c2.getBlue()  - c1.getBlue())  * localRatio);
-
-            g2d.setColor(new Color(r, gr, b));
-            g2d.fillRect(0, y, w, 1);
-        }
-
-        //tempel noise texture berulang di seluruh layar
-        for (int y = 0; y < h; y += 100) {
-            for (int x = 0; x < w; x += 100) {
-                g2d.drawImage(noiseTexture, x, y, null);
-            }
-        }
-
-        //efek glow radial merah lembut di tengah layar
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.1f));
-
-        RadialGradientPaint glow = new RadialGradientPaint(
-            w / 2, h / 2,          //titik pusat glow
-            w / 2,                 //radius glow
-            new float[]{0f, 1f},   //rasio gradient
-            new Color[]{
-                new Color(168,106,101,255), //merah tua
-                new Color(168,106,101,0)    //transparan
-            }
-        );
-
-        g2d.setPaint(glow);
-        g2d.fillOval(0, 0, w, h);
-
-        //balikin opacity ke normal
-        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-    }
-
-        //atur posisi semua komponen menu ke layar
+    //atur posisi semua komponen menu ke layar
     private void initComponents() {
 
         //sapaan user di kiri atas

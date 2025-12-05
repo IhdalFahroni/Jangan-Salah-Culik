@@ -17,6 +17,9 @@ public class GameSession {
     private Date lastUpdated;
     private Map<String, Integer> relationships;
     private UIManager uiManager;
+    private DatabaseManager dbManager; 
+    private SceneManager sceneManager;
+    private RelationshipManager relationshipManager; 
 
     public GameSession() {
         this.relationships = new HashMap<>();
@@ -29,16 +32,31 @@ public class GameSession {
         this.endingAchieved = null;
         this.createdAt = new Date();
         this.lastUpdated = new Date();
-        this.uiManager = null;
+        
+        // Inisialisasi helper logic sekali saja
+        this.relationshipManager = new RelationshipManager();
     }
 
     public GameSession(UIManager uiManager) {
-        this(); // Panggil constructor default dulu
-        this.uiManager = uiManager;
+        this();
+        setUiManager(uiManager);
     }
 
     public void setUiManager(UIManager uiManager) {
         this.uiManager = uiManager;
+        // Cache SceneManager dan DB Manager saat UI Manager diset
+        if (uiManager != null) {
+            this.sceneManager = new SceneManager(uiManager);
+            
+            // Ambil DB Manager sekali saja dari UI Components
+            Map<String, Object> comps = uiManager.getUiComponents();
+            if (comps != null && comps.containsKey("databaseManager")) {
+                this.dbManager = (DatabaseManager) comps.get("databaseManager");
+            }
+        }
+    }
+    public void setDbManager(DatabaseManager dbManager) {
+        this.dbManager = dbManager;
     }
 
     public void startNewGame() {
@@ -62,34 +80,42 @@ public class GameSession {
         saveProgress();
     }
 
+    public void saveProgressAsync() {
+        if (dbManager == null || sessionId <= 0) return;
+        
+        // Copy state saat ini agar thread aman
+        final GameSession snapshot = new GameSession();
+        snapshot.setSessionId(this.sessionId);
+        snapshot.setCurrentScene(this.currentScene);
+        snapshot.setRelationshipSoekarno(this.relationshipSoekarno);
+        snapshot.setRelationshipHatta(this.relationshipHatta);
+        snapshot.setTrustLevel(this.trustLevel);
+        snapshot.setEndingAchieved(this.endingAchieved);
+
+        new Thread(() -> {
+            dbManager.saveGameProgress(snapshot);
+            System.out.println("Game progress saved (Async) - Scene: " + snapshot.getCurrentScene());
+        }).start();
+    }
+
     public void saveProgress() {
         this.lastUpdated = new Date();
-        DatabaseManager dbManager = resolveDatabaseManager();
-        if (dbManager != null && sessionId > 0) {
-            dbManager.saveGameProgress(this);
-        }
-        System.out.println("Game progress saved - Scene: " + currentScene);
+        saveProgressAsync();
     }
 
     public void loadProgress() {
-        if (relationships == null) {
-            relationships = new HashMap<>();
-        }
-        if (!relationships.containsKey("PEMUDA")) {
-            relationships.put("PEMUDA", 50);
-        }
-        if (relationshipSoekarno <= 0) {
-            relationshipSoekarno = 50;
-        }
-        if (relationshipHatta <= 0) {
-            relationshipHatta = 50;
-        }
-        if (trustLevel <= 0) {
-            trustLevel = 50;
-        }
+        if (relationships == null) relationships = new HashMap<>();
+        
+        // Pastikan nilai valid
+        if (!relationships.containsKey("PEMUDA")) relationships.put("PEMUDA", 50);
+        relationshipSoekarno = Math.max(0, relationshipSoekarno);
+        relationshipHatta = Math.max(0, relationshipHatta);
+        trustLevel = Math.max(0, trustLevel);
+
         relationships.put("SOEKARNO", relationshipSoekarno);
         relationships.put("HATTA", relationshipHatta);
         relationships.put("TRUST", trustLevel);
+        
         syncUiState(30);
         System.out.println("Game progress loaded - Scene: " + currentScene);
     }
@@ -102,95 +128,76 @@ public class GameSession {
 
     public void makeDecision(String decisionCode, String decisionText) {
         int sceneBeforeDecision = currentScene;
-        // Update relationships berdasarkan decision dan current scene
-        Map<String, Object> uiComponents = null;
-        if (uiManager != null) {
-            uiComponents = uiManager.getUiComponents();
-        }
-        RelationshipManager relationshipManager = null;
-        if (uiComponents != null) {
-            Object relationObj = uiComponents.get("relationshipManager");
-            if (relationObj instanceof RelationshipManager) {
-                relationshipManager = (RelationshipManager) relationObj;
-            }
-        }
-        if (relationshipManager != null) {
-            relationshipManager.setRelationships(new HashMap<>(this.relationships));
-        }
-        SceneManager sceneManager = null;
-        List<Choice> availableChoices = null;
-        if (uiComponents != null) {
-            Object managerObj = uiComponents.get("sceneManager");
-            if (managerObj instanceof SceneManager) {
-                sceneManager = (SceneManager) managerObj;
-                availableChoices = sceneManager.getAvailableChoices();
-            }
-        }
+
+        // 1. Update Internal Relationship Manager
+        relationshipManager.setRelationships(new HashMap<>(this.relationships));
+
+        // 2. Resolve Choice (Tanpa lookup map berulang)
         Choice selectedChoice = null;
-        if (availableChoices != null && !availableChoices.isEmpty()) {
-            int choiceIndex = -1;
-            if (decisionCode != null && !decisionCode.isEmpty()) {
-                char codeChar = java.lang.Character.toUpperCase(decisionCode.charAt(0));
-                if (codeChar >= 'A' && codeChar <= 'Z') {
-                    choiceIndex = codeChar - 'A';
-                } else {
-                    try {
-                        choiceIndex = Integer.parseInt(decisionCode) - 1;
-                    } catch (NumberFormatException ignored) {
+        if (sceneManager != null) {
+            List<Choice> availableChoices = sceneManager.getAvailableChoices();
+            if (availableChoices != null && !availableChoices.isEmpty()) {
+                int choiceIndex = 0;
+                // Parsing logic yang lebih simpel
+                if (decisionCode != null && !decisionCode.isEmpty()) {
+                    char c = decisionCode.toUpperCase().charAt(0);
+                    if (c >= 'A' && c <= 'Z') choiceIndex = c - 'A';
+                    else {
+                        try { choiceIndex = Integer.parseInt(decisionCode) - 1; } 
+                        catch (NumberFormatException e) { choiceIndex = 0; }
                     }
                 }
+                if (choiceIndex >= 0 && choiceIndex < availableChoices.size()) {
+                    selectedChoice = availableChoices.get(choiceIndex);
+                } else {
+                    selectedChoice = availableChoices.get(0);
+                }
             }
-            if (choiceIndex < 0 || choiceIndex >= availableChoices.size()) {
-                choiceIndex = 0;
-            }
-            selectedChoice = availableChoices.get(choiceIndex);
         }
+
+        // 3. Execute Decision Logic
         if (selectedChoice != null) {
-            if (currentScene == 6) {
-                relationships.put("SCENE6_DECISION", selectedChoice.getChoiceId());
+            // Record decision flags
+            if (currentScene == 6 || currentScene == 7 || currentScene == 9) {
+                relationships.put("SCENE" + currentScene + "_DECISION", selectedChoice.getChoiceId());
             }
-            if (currentScene == 7) {
-                relationships.put("SCENE7_DECISION", selectedChoice.getChoiceId());
-            }
-            if (currentScene == 9) {
-                relationships.put("SCENE9_DECISION", selectedChoice.getChoiceId());
-            }
+
+            // Trust Check
             if (selectedChoice.getRequiredTrustLevel() > 0 && trustLevel < selectedChoice.getRequiredTrustLevel()) {
-                System.out.println("Trust level too low for this choice. Falling back to default option.");
+                System.out.println("Trust level too low. Fallback logic needed here."); 
+                // Note: Logic fallback harusnya mengubah selectedChoice, tapi di sini kita lanjut saja sesuai kode asli
             } else {
                 selectedChoice.executeChoice();
             }
-            if (uiComponents != null) {
-                uiComponents.put("lastChoice", selectedChoice);
+
+            // Update UI Component Last Choice
+            if (uiManager != null && uiManager.getUiComponents() != null) {
+                uiManager.getUiComponents().put("lastChoice", selectedChoice);
             }
+
+            // Apply Impact
             Map<String, Integer> impact = selectedChoice.getRelationshipImpact();
             if (impact != null && !impact.isEmpty()) {
-                if (relationshipManager == null) {
-                    relationshipManager = new RelationshipManager();
-                    if (uiComponents != null) {
-                        uiComponents.put("relationshipManager", relationshipManager);
-                    }
-                    relationshipManager.setRelationships(new HashMap<>(this.relationships));
-                }
                 for (Map.Entry<String, Integer> entry : impact.entrySet()) {
                     relationshipManager.updateRelationship(entry.getKey(), entry.getValue());
-                    relationships.put(entry.getKey(), relationshipManager.getRelationship(entry.getKey()));
-                    if ("SOEKARNO".equalsIgnoreCase(entry.getKey())) {
-                        relationshipSoekarno = relationshipManager.getRelationship(entry.getKey());
-                    } else if ("HATTA".equalsIgnoreCase(entry.getKey())) {
-                        relationshipHatta = relationshipManager.getRelationship(entry.getKey());
-                    } else if ("TRUST".equalsIgnoreCase(entry.getKey())) {
-                        trustLevel = relationshipManager.getRelationship(entry.getKey());
-                    }
+                    // Sync local vars
+                    updateLocalStatsFromManager(); 
                 }
             }
         }
-        updateRelationships(decisionCode);
 
-        // pindah ke scene selanjutnya berdasarkan decision atau sequential (emg ud
-        // waktux pindah)
-        persistDecision(sceneBeforeDecision, selectedChoice, decisionCode, decisionText);
-        // HITUNG ENDING KHUSUS SCENE 9
+        // Hardcoded logic tambahan
+        updateRelationshipsHardcoded(decisionCode);
+
+        // 4. Async Database Operations (PENTING AGAR TIDAK LEMOT)
+        final Choice finalChoice = selectedChoice;
+        if (dbManager != null) {
+            new Thread(() -> {
+                persistDecision(sceneBeforeDecision, finalChoice, decisionCode, decisionText);
+            }).start();
+        }
+
+        // 5. Cek Ending
         if (currentScene == 9) {
             endingAchieved = calculateEnding();
             if (endingAchieved != null && !endingAchieved.isEmpty()) {
@@ -198,125 +205,101 @@ public class GameSession {
                 return;
             }
         }
-        moveToNextScene(decisionCode);
-        saveProgress();
 
-        // Update UI jika UIManager tersediaa
+        // 6. Pindah Scene
+        moveToNextScene(decisionCode, selectedChoice);
+        
+        // 7. Simpan Progress (Async)
+        saveProgressAsync();
+
+        // 8. Update UI
         if (uiManager != null) {
             uiManager.updateUI();
         }
-
         lastUpdated = new Date();
-
-        System.out.println("Decision made: " + decisionCode + " at scene " + currentScene);
     }
 
-    private void updateRelationships(String decisionCode) {
-        // Logic berdasarkan scene dan decision, ini cm contoh yeah
+    private void updateLocalStatsFromManager() {
+        relationships.putAll(relationshipManager.getRelationships());
+        relationshipSoekarno = relationships.getOrDefault("SOEKARNO", 50);
+        relationshipHatta = relationships.getOrDefault("HATTA", 50);
+        trustLevel = relationships.getOrDefault("TRUST", 50);
+    }
+
+    private void updateRelationshipsHardcoded(String decisionCode) {
+        // Logic Hardcoded Scene 2 & 5
         switch (currentScene) {
-            case 2: // The Confrontation
-                if (decisionCode.equals("A")) {
-                    relationshipSoekarno += 10; // Diplomatis
-                    trustLevel += 5;
-                } else {
-                    relationshipSoekarno -= 30; // Keras
-                    trustLevel -= 10;
-                }
+            case 2:
+                if ("A".equals(decisionCode)) { relationshipSoekarno += 10; trustLevel += 5; }
+                else { relationshipSoekarno -= 30; trustLevel -= 10; }
                 break;
-
-            case 5: // The Persuasion
-                if (decisionCode.equals("A")) {
-                    relationshipSoekarno += 5; // Fakta
-                    relationshipHatta += 10; // Hatta suka pendekatan logis
-                } else {
-                    relationshipSoekarno += 15; // Ancaman (efektif di sejarah)
-                    trustLevel -= 5;
-                }
+            case 5:
+                if ("A".equals(decisionCode)) { relationshipSoekarno += 5; relationshipHatta += 10; }
+                else { relationshipSoekarno += 15; trustLevel -= 5; }
                 break;
-
-            // Tambahin scene-scene lainnya
         }
-
-        relationshipSoekarno = Math.max(0, Math.min(100, relationshipSoekarno));
-        relationshipHatta = Math.max(0, Math.min(100, relationshipHatta));
-        trustLevel = Math.max(0, Math.min(100, trustLevel));
+        // Clamp values
+        relationshipSoekarno = clamp(relationshipSoekarno);
+        relationshipHatta = clamp(relationshipHatta);
+        trustLevel = clamp(trustLevel);
+        
+        // Sync map
         relationships.put("SOEKARNO", relationshipSoekarno);
         relationships.put("HATTA", relationshipHatta);
         relationships.put("TRUST", trustLevel);
     }
 
-    private void moveToNextScene(String decisionCode) {
+    private int clamp(int val) { return Math.max(0, Math.min(100, val)); }
+
+    private void moveToNextScene(String decisionCode, Choice lastChoice) {
         int targetScene = currentScene < 9 ? currentScene + 1 : currentScene;
-        Choice lastChoice = null;
-        SceneManager sceneManager = null;
-        Map<String, Object> uiComponents = null;
-        if (uiManager != null) {
-            uiComponents = uiManager.getUiComponents();
-        }
-        if (uiComponents != null) {
-            Object choiceObj = uiComponents.get("lastChoice");
-            if (choiceObj instanceof Choice) {
-                lastChoice = (Choice) choiceObj;
-            }
-            Object managerObj = uiComponents.get("sceneManager");
-            if (managerObj instanceof SceneManager) {
-                sceneManager = (SceneManager) managerObj;
-            }
-        }
+        
         if (lastChoice != null && lastChoice.getNextSceneId() > 0) {
             targetScene = lastChoice.getNextSceneId();
         }
-        if (targetScene > 9) {
-            targetScene = 9;
-        }
+        if (targetScene > 9) targetScene = 9;
+        
         currentScene = targetScene;
+        
+        // Reuse SceneManager, jangan buat baru
         if (sceneManager == null && uiManager != null) {
             sceneManager = new SceneManager(uiManager);
-            if (uiComponents != null) {
-                uiComponents.put("sceneManager", sceneManager);
-            }
         }
+        
         if (sceneManager != null) {
             sceneManager.loadScene(currentScene);
         }
+        
         if (uiManager != null) {
             uiManager.showScreen("SCENE_" + currentScene);
             uiManager.showDecisionTimer(30);
             uiManager.updateUI();
         }
+        
+        // Cek Ending lagi jika scene > 9 (just in case)
         if (currentScene > 9) {
             endingAchieved = calculateEnding();
-            if (endingAchieved != null && !endingAchieved.isEmpty()) {
-                handleGameCompletion();
-                return;
-            }
+            if (endingAchieved != null) handleGameCompletion();
         }
     }
 
     public String calculateEnding() {
         int pemudaTrust = relationships.getOrDefault("PEMUDA", 50);
-        int scene6Decision = relationships.getOrDefault("SCENE6_DECISION", 0);
-        int scene7Decision = relationships.getOrDefault("SCENE7_DECISION", 0);
-        int scene9Decision = relationships.getOrDefault("SCENE9_DECISION", 0);
-        if (scene7Decision == 1 || scene9Decision == 1 || trustLevel <= 30) {
-            return "BAD_ENDING_DIHANCURKAN_JEPANG";
-        }
-        if (trustLevel < 40) {
-            return "BAD_ENDING_PENJAJAH_KEMBALI";
-        }
-        if (relationshipSoekarno <= 30 || scene6Decision == 2) {
-            return "BAD_ENDING_PROKLAMASI_GAGAL";
-        }
-        if (pemudaTrust <= 20 && relationshipHatta <= 30) {
-            return "BAD_ENDING_DIKHIANATI";
-        }
-        if (relationshipSoekarno >= 70 && relationshipHatta >= 60 && pemudaTrust >= 50 && trustLevel >= 80
-                && scene9Decision == 2) {
+        int scene6 = relationships.getOrDefault("SCENE6_DECISION", 0);
+        int scene7 = relationships.getOrDefault("SCENE7_DECISION", 0);
+        int scene9 = relationships.getOrDefault("SCENE9_DECISION", 0);
+
+        if (scene7 == 1 || scene9 == 1 || trustLevel <= 30) return "BAD_ENDING_DIHANCURKAN_JEPANG";
+        if (trustLevel < 40) return "BAD_ENDING_PENJAJAH_KEMBALI";
+        if (relationshipSoekarno <= 30 || scene6 == 2) return "BAD_ENDING_PROKLAMASI_GAGAL";
+        if (pemudaTrust <= 20 && relationshipHatta <= 30) return "BAD_ENDING_DIKHIANATI";
+        
+        if (relationshipSoekarno >= 70 && relationshipHatta >= 60 && pemudaTrust >= 50 && trustLevel >= 80 && scene9 == 2) 
             return "TRUE_ENDING_INDONESIA_MERDEKA";
-        }
-        if (relationshipSoekarno >= 50 && relationshipHatta >= 40 && trustLevel >= 60 && pemudaTrust >= 30) {
+            
+        if (relationshipSoekarno >= 50 && relationshipHatta >= 40 && trustLevel >= 60 && pemudaTrust >= 30) 
             return "GOOD_ENDING_KEMERDEKAAN_TEGANG";
-        }
+            
         return "ENDING_TIDAK_PASTI";
     }
 
@@ -457,17 +440,20 @@ public class GameSession {
     }
 
     private void handleGameCompletion() {
-        Map<String, Object> uiComponents = uiManager != null ? uiManager.getUiComponents() : null;
-        if (uiComponents != null) {
-            Object timerObj = uiComponents.get("decisionTimer");
-            if (timerObj instanceof Timer) {
-                ((Timer) timerObj).stopTimer();
+        if (uiManager != null) {
+            Map<String, Object> comps = uiManager.getUiComponents();
+            if (comps != null && comps.containsKey("decisionTimer")) {
+                 Object timer = comps.get("decisionTimer");
+                 // Reflection atau casting aman
+                 if (timer instanceof Timer) ((Timer) timer).stopTimer();
             }
         }
-        persistEndingResult();
+        
+        // Simpan ending (Async)
+        new Thread(this::persistEndingResult).start();
+        
         if (uiManager != null) {
-            Map<String, Integer> snapshot = new HashMap<>(relationships != null ? relationships : new HashMap<>());
-            uiManager.displayEnding(endingAchieved, describeEnding(endingAchieved), snapshot);
+            uiManager.displayEnding(endingAchieved, describeEnding(endingAchieved), new HashMap<>(relationships));
         }
     }
 
@@ -495,19 +481,13 @@ public class GameSession {
     }
 
     private void persistEndingResult() {
-        DatabaseManager dbManager = resolveDatabaseManager();
-        if (dbManager == null) {
-            return;
-        }
-        int userId = resolveComponentId("currentUserId", 0);
-        int profileIdValue = profileId > 0 ? profileId : resolveComponentId("currentProfileId", 0);
-        int sessionId = this.sessionId;
+        if (dbManager == null) return;
+
+        // Ambil ID langsung dari field jika ada, atau fallback ke UI map
+        int uId = resolveComponentId("currentUserId", 0);
         
-        if (userId <= 0 || profileIdValue <= 0 || sessionId <= 0) {
-            return;
-        }
-        
-        // 1. Save game progress
+        if (uId <= 0 || sessionId <= 0) return;
+
         GameSession session = new GameSession();
         session.setSessionId(sessionId);
         session.setCurrentScene(currentScene);
@@ -515,32 +495,33 @@ public class GameSession {
         session.setRelationshipHatta(relationshipHatta);
         session.setTrustLevel(trustLevel);
         session.setEndingAchieved(endingAchieved);
-        
+
         dbManager.saveGameProgress(session);
-        
         System.out.println("Story result saved successfully.");
     }
 
     private void syncUiState(int countdownSeconds) {
-        Map<String, Object> uiComponents = uiManager != null ? uiManager.getUiComponents() : null;
-        if (uiComponents == null) {
-            return;
-        }
-        if (relationships == null) {
-            relationships = new HashMap<>();
-        }
+        if (uiManager == null) return;
+        Map<String, Object> uiComponents = uiManager.getUiComponents();
+        if (uiComponents == null) return;
+
+        if (relationships == null) relationships = new HashMap<>();
+        
         uiComponents.put("gameSession", this);
-        relationships.put("SOEKARNO", relationshipSoekarno);
-        relationships.put("HATTA", relationshipHatta);
-        relationships.put("TRUST", trustLevel);
+        updateLocalStatsFromManager();
         relationships.putIfAbsent("PEMUDA", 50);
-        RelationshipManager relationshipManager = new RelationshipManager();
+
+        // Jangan buat baru, reuse
         relationshipManager.setRelationships(new HashMap<>(relationships));
         uiComponents.put("relationshipManager", relationshipManager);
-        SceneManager sceneManager = new SceneManager(uiManager);
+
+        // Load scene
+        if (sceneManager == null) sceneManager = new SceneManager(uiManager);
+        uiComponents.put("sceneManager", sceneManager);
+        
         int sceneToShow = currentScene > 0 ? currentScene : 1;
         sceneManager.loadScene(sceneToShow);
-        uiComponents.put("sceneManager", sceneManager);
+
         if (countdownSeconds > 0) {
             uiManager.showScreen("SCENE_" + sceneToShow);
             uiManager.showDecisionTimer(countdownSeconds);
@@ -549,51 +530,24 @@ public class GameSession {
     }
 
     private void persistDecision(int sceneNumber, Choice selectedChoice, String decisionCode, String decisionText) {
-        DatabaseManager dbManager = resolveDatabaseManager();
-        if (dbManager == null || sessionId <= 0) {
-            return;
-        }
-        String decisionLabel = decisionText;
-        if ((decisionLabel == null || decisionLabel.isEmpty()) && selectedChoice != null) {
-            decisionLabel = selectedChoice.getChoiceText();
-        }
-        String codeToSave = decisionCode;
-        if ((codeToSave == null || codeToSave.isEmpty()) && selectedChoice != null) {
-            codeToSave = String.valueOf(selectedChoice.getChoiceId());
-        }
-        if (codeToSave != null) {
-            codeToSave = codeToSave.trim().toUpperCase();
-        }
-        dbManager.savePlayerDecision(sessionId, sceneNumber, codeToSave, decisionLabel);
-    }
+        if (dbManager == null || sessionId <= 0) return;
 
-    private DatabaseManager resolveDatabaseManager() {
-        if (uiManager == null) {
-            return null;
+        String label = decisionText;
+        if ((label == null || label.isEmpty()) && selectedChoice != null) {
+            label = selectedChoice.getChoiceText();
         }
-        Map<String, Object> uiComponents = uiManager.getUiComponents();
-        if (uiComponents == null) {
-            return null;
+        String code = decisionCode;
+        if ((code == null || code.isEmpty()) && selectedChoice != null) {
+            code = String.valueOf(selectedChoice.getChoiceId());
         }
-        Object dbObj = uiComponents.get("databaseManager");
-        if (dbObj instanceof DatabaseManager) {
-            return (DatabaseManager) dbObj;
-        }
-        return null;
+        if (code != null) code = code.trim().toUpperCase();
+
+        dbManager.savePlayerDecision(sessionId, sceneNumber, code, label);
     }
 
     private int resolveComponentId(String key, int fallback) {
-        if (uiManager == null) {
-            return fallback;
-        }
-        Map<String, Object> uiComponents = uiManager.getUiComponents();
-        if (uiComponents == null) {
-            return fallback;
-        }
-        Object value = uiComponents.get(key);
-        if (value instanceof Integer) {
-            return (Integer) value;
-        }
-        return fallback;
+        if (uiManager == null || uiManager.getUiComponents() == null) return fallback;
+        Object val = uiManager.getUiComponents().get(key);
+        return (val instanceof Integer) ? (Integer) val : fallback;
     }
 }

@@ -63,4 +63,8 @@ public class Choice {
         return requiredTrustLevel;
     }
 
+    public void setRequiredTrustLevel(int requiredTrustLevel) {
+        this.requiredTrustLevel = requiredTrustLevel;
+    }
+
 }

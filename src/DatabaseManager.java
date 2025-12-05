@@ -2,6 +2,7 @@
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class DatabaseManager {
     private static final String URL = "jdbc:mysql://127.0.0.1:3306/rengasdengklok_db";
@@ -444,6 +445,88 @@ public class DatabaseManager {
         }
     }
     
+    public Scene loadSceneData(int sceneId) {
+        Scene scene = null;
+        String queryScene = "SELECT * FROM scenes WHERE scene_id = ?";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(queryScene)) {
+            stmt.setInt(1, sceneId);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                scene = new Scene();
+                scene.setSceneId(rs.getInt("scene_id"));
+                scene.setSceneTitle(rs.getString("title"));
+                scene.setSceneDescription(rs.getString("description"));
+                scene.setBackgroundImage(rs.getString("bg_image"));
+                scene.setBackgroundMusic(rs.getString("bg_music"));
+                
+                // Ambil Characters dan Choices dari tabel relasi
+                scene.setCharacters(loadCharactersForScene(sceneId));
+                scene.setChoices(loadChoicesForScene(sceneId));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error loading scene " + sceneId + ": " + e.getMessage());
+        }
+        return scene;
+    }
+
+    private List<Character> loadCharactersForScene(int sceneId) {
+        List<Character> list = new ArrayList<>();
+        String query = "SELECT * FROM scene_characters WHERE scene_id = ?";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, sceneId);
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                Character c = new Character();
+                // CharacterId kita skip/auto, yg penting namanya
+                c.setCharacterName(rs.getString("character_name"));
+                c.setCharacterRole(rs.getString("character_role"));
+                list.add(c);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error loading characters: " + e.getMessage());
+        }
+        return list;
+    }
+
+    private List<Choice> loadChoicesForScene(int sceneId) {
+        List<Choice> list = new ArrayList<>();
+        String query = "SELECT * FROM scene_choices WHERE scene_id = ?";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, sceneId);
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                Choice c = new Choice();
+                c.setChoiceId(rs.getInt("choice_id")); // ID unik pilihan
+                c.setChoiceText(rs.getString("choice_text"));
+                c.setNextSceneId(rs.getInt("next_scene_id"));
+                c.setRequiredTrustLevel(rs.getInt("required_trust"));
+                
+                // Masukkan dampak ke map
+                Map<String, Integer> impact = c.getRelationshipImpact();
+                int s = rs.getInt("impact_soekarno");
+                int h = rs.getInt("impact_hatta");
+                int p = rs.getInt("impact_pemuda");
+                int t = rs.getInt("impact_trust");
+                
+                if (s != 0) impact.put("SOEKARNO", s);
+                if (h != 0) impact.put("HATTA", h);
+                if (p != 0) impact.put("PEMUDA", p);
+                if (t != 0) impact.put("TRUST", t);
+                
+                list.add(c);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error loading choices: " + e.getMessage());
+        }
+        return list;
+    }
+
     // Getters and Setters
     public Connection getConnection() { return connection; }
     public void setConnection(Connection connection) { this.connection = connection; }

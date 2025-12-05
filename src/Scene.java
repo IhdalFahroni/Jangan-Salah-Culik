@@ -1,4 +1,4 @@
-
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +8,7 @@ public class Scene {
     private String sceneDescription;
     private String backgroundImage;
     private String backgroundMusic;
+    private BufferedImage loadedImage;
     private List<Character> characters;
     private List<Choice> choices;
 
@@ -80,4 +81,7 @@ public class Scene {
     public void setChoices(List<Choice> choices) {
         this.choices = choices;
     }
+
+    public BufferedImage getLoadedImage() { return loadedImage; }
+    public void setLoadedImage(BufferedImage loadedImage) { this.loadedImage = loadedImage; }
 }

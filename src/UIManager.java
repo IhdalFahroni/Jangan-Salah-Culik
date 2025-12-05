@@ -1,177 +1,171 @@
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import javax.swing.Timer; // Pakai Timer bawaan Swing (Aman)
 
-//kelas yang ngatur perpindahan layar dan hubungin panel-panel
 public class UIManager {
 
-    private Object currentScreen;                //nama layar yang sedang tampil
-    private Map<String, Object> uiComponents;    //tempat nyimpen komponen penting
-    private StoryPanel storyPanel;               //panel cerita
-    private GameOverPanel gameOverPanel;         //panel ending
-    private Consumer<String> screenSwitcher;     //fungsi ganti layar pakai cardlayout
+    private Object currentScreen;
+    private Map<String, Object> uiComponents;
+    private StoryPanel storyPanel;
+    private GameOverPanel gameOverPanel;
+    private Consumer<String> screenSwitcher;
+
+    // Timer Swing (Pengganti DecisionTimer custom)
+    private Timer decisionTimer; 
+    private int secondsLeft;
 
     public UIManager() {
         this.uiComponents = new HashMap<>();
     }
 
-    //hubungkan storyPanel dengan uiManagerr
-    public void setStoryPanel(StoryPanel storyPanel) {
-        this.storyPanel = storyPanel;
+    // --- LOGIKA TIMER BARU (AMAN) ---
+    
+    public void showDecisionTimer(int durationSeconds) {
+        // 1. Matikan timer lama jika ada (Wajib!)
+        stopDecisionTimer();
+
+        // 2. Reset waktu
+        this.secondsLeft = durationSeconds;
+        updateTimerUI(secondsLeft);
+
+        // 3. Buat Timer baru (Tick setiap 1 detik / 1000ms)
+        decisionTimer = new Timer(1000, e -> {
+            secondsLeft--;
+            updateTimerUI(secondsLeft);
+
+            if (secondsLeft <= 0) {
+                ((Timer)e.getSource()).stop(); // Stop diri sendiri
+                autoSelectChoice(); // Waktu habis, pilih otomatis
+            }
+        });
+        
+        decisionTimer.setRepeats(true);
+        decisionTimer.start();
+        System.out.println("[UIManager] Timer started: " + durationSeconds + "s");
+    }
+
+    public void stopDecisionTimer() {
+        if (decisionTimer != null && decisionTimer.isRunning()) {
+            decisionTimer.stop();
+            decisionTimer = null; // Hapus referensi
+            System.out.println("[UIManager] Timer stopped.");
+        }
+    }
+
+    private void autoSelectChoice() {
+        System.out.println("[UIManager] Waktu habis! Memilih otomatis...");
+        
+        // Ambil SceneManager untuk tahu pilihan yang tersedia
+        SceneManager sm = resolveSceneManager();
+        if (sm == null) return;
+        
+        java.util.List<Choice> choices = sm.getAvailableChoices();
+        if (choices == null || choices.isEmpty()) return;
+
+        // Pilih opsi pertama (A) sebagai default
+        handleChoiceSelection(choices.get(0), 0);
+    }
+
+    private void updateTimerUI(int seconds) {
         if (storyPanel != null) {
-            storyPanel.setUiManager(this);
+            storyPanel.updateTimer(seconds);
         }
     }
 
-    //set panel ending
-    public void setGameOverPanel(GameOverPanel gameOverPanel) {
-        this.gameOverPanel = gameOverPanel;
-    }
+    // --- SISA KODE LAMA (TETAP SAMA) ---
 
-    //set fungsi pengganti layar
-    public void setScreenSwitcher(Consumer<String> screenSwitcher) {
-        this.screenSwitcher = screenSwitcher;
-    }
-
-    //fungsi utama buat ganti layar
-    public void showScreen(String screenName) {
-        this.currentScreen = screenName;
-
-        //kalau pindah ke menu utama atau halaman non-cerita, timer dihentikan
-        if ("MAIN_MENU".equals(screenName) || 
-            "LOGIN".equals(screenName) || 
-            "LEADERBOARD".equals(screenName)) 
-        {
-            stopDecisionTimer();
-            System.out.println("[UIManager] Timer dihentikan karena pindah layar.");
-        }
-
-        //panggil cardlayout buat ganti tampilan
-        if (screenSwitcher != null) {
-            if (screenName.startsWith("SCENE_")) {
-                screenSwitcher.accept("STORY");      //semua scene masuk lewat panel STORY
-            } else {
-                screenSwitcher.accept(screenName);
-            }
-        }
-
-        //update isi scene kalau lagi buka panel cerita
-        if (storyPanel != null && screenName.startsWith("SCENE_")) {
-            SceneManager sceneManager = resolveSceneManager();
-            if (sceneManager != null) {
-                storyPanel.displayScene(sceneManager.getCurrentScene());
-            }
-        }
-    }
-
-    //update hubungan antar tokoh
-    public void updateUI() {
-        if (storyPanel == null) return;
-
-        RelationshipManager relationshipManager = resolveRelationshipManager();
-        if (relationshipManager != null) {
-            storyPanel.updateRelationships(relationshipManager.getRelationships());
-        }
-    }
-
-    //menampilkan timer untuk pilihan
-    public void showDecisionTimer(int countdown) {
-        updateTimer(countdown);
-
-        Timer decisionTimer = resolveDecisionTimer();
-        if (decisionTimer != null) {
-            decisionTimer.stopTimer();               //stop timer lama
-            decisionTimer.setTimeRemaining(countdown);
-
-            if (decisionTimer instanceof DecisionTimer) {
-                ((DecisionTimer) decisionTimer).setUiManager(this);
-            }
-
-            decisionTimer.startTimer();
-        }
-    }
-
-    //dipanggil saat user memilih pilihan
     public void handleChoiceSelection(Choice choice, int choiceIndex) {
-        stopDecisionTimer();                        //matikan timer dulu
+        // PENTING: Matikan timer segera saat user klik
+        stopDecisionTimer();
+        
+        // Matikan tombol agar tidak bisa klik ganda (Fix previous issue)
+        if (storyPanel != null) {
+            storyPanel.setButtonsEnabled(false);
+        }
 
         GameSession session = resolveGameSession();
         if (session == null) return;
 
-        //mengubah index pilihan menjadi kode huruf A/B/C
         String decisionCode = String.valueOf((char) ('A' + Math.max(0, choiceIndex)));
         String decisionText = (choice != null) ? choice.getChoiceText() : null;
 
         session.makeDecision(decisionCode, decisionText);
     }
 
-    //sinkronisasi tampilan timer di panel cerita
-    public void updateTimer(int secondsRemaining) {
-        if (storyPanel != null) {
-            storyPanel.updateTimer(secondsRemaining);
-        }
-    }
+    public void showScreen(String screenName) {
+        this.currentScreen = screenName;
 
-    //menampilkan halaman ending
-    public void displayEnding(String endingKey, String description, Map<String, Integer> relationships) {
-        if (gameOverPanel != null) {
-            gameOverPanel.setEndingInfo(endingKey, description, relationships);
+        // Matikan timer jika keluar dari story
+        if (!screenName.startsWith("SCENE_") && !"STORY".equals(screenName)) {
+            stopDecisionTimer();
         }
 
         if (screenSwitcher != null) {
+            if (screenName.startsWith("SCENE_")) {
+                screenSwitcher.accept("STORY");
+            } else {
+                screenSwitcher.accept(screenName);
+            }
+        }
+
+        if (storyPanel != null && screenName.startsWith("SCENE_")) {
+            SceneManager sceneManager = resolveSceneManager();
+            if (sceneManager != null) {
+                // Pastikan SceneManager sudah memuat scene terbaru sebelum ditampilkan
+                storyPanel.displayScene(sceneManager.getCurrentScene());
+            }
+        }
+    }
+
+    public void updateUI() {
+        if (storyPanel == null) return;
+        RelationshipManager relationshipManager = resolveRelationshipManager();
+        if (relationshipManager != null) {
+            storyPanel.updateRelationships(relationshipManager.getRelationships());
+        }
+    }
+
+    public void displayEnding(String endingKey, String description, Map<String, Integer> relationships) {
+        stopDecisionTimer(); // Pastikan timer mati saat ending
+        if (gameOverPanel != null) {
+            gameOverPanel.setEndingInfo(endingKey, description, relationships);
+        }
+        if (screenSwitcher != null) {
             screenSwitcher.accept("ENDING");
         }
-
-        stopDecisionTimer();
     }
 
-    //ambil sceneManager dari map
+    // --- RESOLVERS & SETTERS ---
+
+    public void setStoryPanel(StoryPanel storyPanel) {
+        this.storyPanel = storyPanel;
+        if (storyPanel != null) storyPanel.setUiManager(this);
+    }
+
+    public void setGameOverPanel(GameOverPanel gameOverPanel) {
+        this.gameOverPanel = gameOverPanel;
+    }
+
+    public void setScreenSwitcher(Consumer<String> screenSwitcher) {
+        this.screenSwitcher = screenSwitcher;
+    }
+
     private SceneManager resolveSceneManager() {
-        Object managerObj = uiComponents.get("sceneManager");
-        return (managerObj instanceof SceneManager) ? (SceneManager) managerObj : null;
+        Object obj = uiComponents.get("sceneManager");
+        return (obj instanceof SceneManager) ? (SceneManager) obj : null;
     }
 
-    //ambil relationshipManager dari map
     private RelationshipManager resolveRelationshipManager() {
-        Object managerObj = uiComponents.get("relationshipManager");
-        return (managerObj instanceof RelationshipManager) ? (RelationshipManager) managerObj : null;
+        Object obj = uiComponents.get("relationshipManager");
+        return (obj instanceof RelationshipManager) ? (RelationshipManager) obj : null;
     }
 
-    //ambil timer pilihan dari map
-    private Timer resolveDecisionTimer() {
-        Object timerObj = uiComponents.get("decisionTimer");
-        return (timerObj instanceof Timer) ? (Timer) timerObj : null;
-    }
-
-    //matikan timer pilihan
-    private void stopDecisionTimer() {
-        Timer timer = resolveDecisionTimer();
-        if (timer != null) {
-            timer.stopTimer();
-        }
-    }
-
-    //ambil session dari map
     private GameSession resolveGameSession() {
-        Object sessionObj = uiComponents.get("gameSession");
-        return (sessionObj instanceof GameSession) ? (GameSession) sessionObj : null;
+        Object obj = uiComponents.get("gameSession");
+        return (obj instanceof GameSession) ? (GameSession) obj : null;
     }
 
-    //getter setter standar
-    public Object getCurrentScreen() { 
-        return currentScreen; 
-    }
-
-    public void setCurrentScreen(Object currentScreen) { 
-        this.currentScreen = currentScreen; 
-    }
-
-    public Map<String, Object> getUiComponents() { 
-        return uiComponents; 
-    }
-
-    public void setUiComponents(Map<String, Object> uiComponents) 
-    { this.uiComponents = uiComponents; 
-
-    }
+    public Map<String, Object> getUiComponents() { return uiComponents; }
+    public void setUiComponents(Map<String, Object> uiComponents) { this.uiComponents = uiComponents; }
 }

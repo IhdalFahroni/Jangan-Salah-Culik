@@ -8,7 +8,7 @@ import java.util.*;
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
 
-public class StoryPanel extends JPanel {
+public class StoryPanel extends BaseGamePanel {
 
     private UIManager uiManager; //untuk berpindah layar
 
@@ -16,7 +16,6 @@ public class StoryPanel extends JPanel {
     private int lastSceneId = -1;
 
     private BufferedImage bgImage;   //gambar background scene
-    private BufferedImage noiseTexture; //tekstur noise untuk efek grain
 
     //komponen visual di panel cerita
     private StatsBarPanel statsBar;
@@ -30,17 +29,10 @@ public class StoryPanel extends JPanel {
     private Timer visualTimer;
     private int currentTimeLeft = 30;
 
-    private static final int WINDOW_WIDTH = 1024;
-    private static final int WINDOW_HEIGHT = 768;
-
     public StoryPanel() {
-        setLayout(null);
-        setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
-        setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-        setBackground(new Color(80, 55, 50)); //warna dasar fallback
+        super(); // Generate noise dari induk
+        setBackground(new Color(80, 55, 50));
         setOpaque(true);
-
-        generateNoiseTexture();  //buat efek noise
         initComponents();        //siapkan semua komponen
 
         //timer berjalan tiap 1 detik untuk mengurangi waktu
@@ -63,26 +55,14 @@ public class StoryPanel extends JPanel {
         this.uiManager = uiManager;
     }
 
-    //membuat tekstur noise untuk background
-    private void generateNoiseTexture() {
-        noiseTexture = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = noiseTexture.createGraphics();
-        Random rand = new Random(12345);
-
-        for (int y = 0; y < 100; y++) {
-            for (int x = 0; x < 100; x++) {
-                int noise = rand.nextInt(80) - 40;
-                int gray = Math.max(0, Math.min(255, 128 + noise));
-                int alpha = 15;
-                noiseTexture.setRGB(x, y, new Color(gray, gray, gray, alpha).getRGB());
-            }
+    public void setButtonsEnabled(boolean enabled) {
+        if (dialogueBox != null) {
+            dialogueBox.setChoicesEnabled(enabled);
         }
-        g.dispose();
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
 
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -125,10 +105,7 @@ public class StoryPanel extends JPanel {
 
         //tambahkan noise ke background
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-        TexturePaint noisePaint = new TexturePaint(noiseTexture, new Rectangle(0, 0, 100, 100));
-        g2d.setPaint(noisePaint);
-        g2d.fillRect(0, 0, w, h);
-
+        drawNoise(g2d, w, h); // <--- REUSE CODE
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
     }
 
@@ -223,23 +200,14 @@ public class StoryPanel extends JPanel {
         boolean isNewScene = (scene.getSceneId() != lastSceneId);
         lastSceneId = scene.getSceneId();
 
-        try {
-            String bgPath = "assets/Background/scene" + scene.getSceneId() + ".png";
-            File bgFile = new File(bgPath);
-            if (bgFile.exists()) {
-                bgImage = ImageIO.read(bgFile);
-            } else {
-                bgImage = null;
-            }
-        } catch (Exception e) {
-            bgImage = null;
-        }
+        this.bgImage = scene.getLoadedImage();
 
         repaint();
 
         sceneInfo.updateInfo(1, scene.getSceneId(), 9);
         characterPanel.setCharacters(scene.getCharacters());
         dialogueBox.setScene(scene);
+        setButtonsEnabled(true);
 
         boolean hasChoices = (scene.getChoices() != null && !scene.getChoices().isEmpty());
 
@@ -674,6 +642,14 @@ public class StoryPanel extends JPanel {
         public DialogueBoxPanel() {
             setOpaque(false);  //biar background transparan
             setLayout(null);   //posisi elemen manual
+        }
+
+        public void setChoicesEnabled(boolean enabled) {
+            for (Component comp : getComponents()) {
+                if (comp instanceof ChoiceButton) {
+                    comp.setEnabled(enabled);
+                }
+            }
         }
 
         //dipanggil setiap scene baru muncul

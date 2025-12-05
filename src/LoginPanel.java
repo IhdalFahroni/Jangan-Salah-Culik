@@ -3,7 +3,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 //panel utama untuk halaman login dan daftar akun
-public class LoginPanel extends JPanel {
+public class LoginPanel extends BaseGamePanel {
 
     //referensi ke main game supaya panel bisa akses db dan pindah screen
     private RengasdengklokGame mainApp;
@@ -32,15 +32,8 @@ public class LoginPanel extends JPanel {
 
     //konstruktor panel login
     public LoginPanel(RengasdengklokGame app) {
+        super(); // Panggil konstruktor induk (otomatis generate noise)
         this.mainApp = app;
-
-        //pake null layout biar posisi bisa diatur manual
-        setLayout(null);
-        setBackground(ColorPalette.DARK_BG_1);
-        setPreferredSize(new Dimension(WINDOW_WIDTH, WINDOW_HEIGHT));
-
-        //buat tekstur background dulu lalu pasang komponen ui
-        generateNoiseTexture();
         initComponents();
     }
 
@@ -51,100 +44,28 @@ public class LoginPanel extends JPanel {
         if (formContainer != null) formContainer.switchToLogin();
     }
 
-    //bikin noise texture buat efek bintik-bintik halus
-    private void generateNoiseTexture() {
-        noiseTexture = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = noiseTexture.createGraphics();
-        java.util.Random rand = new java.util.Random(12345);
-
-        for (int y = 0; y < 100; y++) {
-            for (int x = 0; x < 100; x++) {
-
-                int noise = rand.nextInt(80) - 40; //nilai noise random
-                int gray = 128 + noise;            //warna abu-abu tengah
-                gray = Math.max(0, Math.min(255, gray)); //clamp nilai rgb
-
-                int alpha = 20; //transparansi rendah biar soft
-                noiseTexture.setRGB(x, y, new Color(gray, gray, gray, alpha).getRGB());
-            }
-        }
-
-        g.dispose();
-    }
-
     //gambar background khusus panel login
     @Override
     protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
+        // 1. Panggil induk untuk gambar Gradient & Noise standar
+        super.paintComponent(g); 
 
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setRenderingHint(
-            RenderingHints.KEY_ANTIALIASING,
-            RenderingHints.VALUE_ANTIALIAS_ON
-        );
+        setRenderingHints(g2d); // Pakai helper dari induk
 
         int w = getWidth();
         int h = getHeight();
 
-        //1.gambar gradasi warna dark bg secara manual dari atas ke bawah
-        Color[] gradColors = {
-            ColorPalette.DARK_BG_1,
-            ColorPalette.DARK_BG_2,
-            ColorPalette.DARK_BG_3
-        };
-
-        for (int y = 0; y < h; y++) {
-            float ratio = (float) y / h;
-
-            //warna transisi antar dark-bg
-            Color c1 = (ratio < 0.5f) ? gradColors[0] : gradColors[1];
-            Color c2 = (ratio < 0.5f) ? gradColors[1] : gradColors[2];
-            float localRatio = (ratio < 0.5f) ? ratio * 2 : (ratio - 0.5f) * 2;
-
-            int r  = (int)(c1.getRed()   + (c2.getRed()   - c1.getRed())   * localRatio);
-            int gC = (int)(c1.getGreen() + (c2.getGreen() - c1.getGreen()) * localRatio);
-            int b  = (int)(c1.getBlue()  + (c2.getBlue()  - c1.getBlue())  * localRatio);
-
-            g2d.setColor(new Color(r, gC, b));
-            g2d.fillRect(0, y, w, 1); //gambar per 1px row biar smooth
-        }
-
-        //2.tempelkan noise texture berulang-ulang di seluruh layar
-        for (int y = 0; y < h; y += 100) {
-            for (int x = 0; x < w; x += 100) {
-                g2d.drawImage(noiseTexture, x, y, null);
-            }
-        }
-
-        //3.efek glow lembut seperti lighting ambience
-        g2d.setComposite(
-            AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.1f)
-        );
-
+        // 2. Gambar Efek Glow Khusus LoginPanel (Kode asli Anda)
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.1f));
         int glowSize = 384;
-
         RadialGradientPaint glow = new RadialGradientPaint(
-            w / 4,
-            h / 4,
-            glowSize / 2,
-            new float[]{0f, 1f},
-            new Color[]{
-                new Color(168, 106, 101, 255),
-                new Color(168, 106, 101,   0)
-            }
+            w / 4, h / 4, glowSize / 2, new float[]{0f, 1f},
+            new Color[]{new Color(168, 106, 101, 255), new Color(168, 106, 101, 0)}
         );
-
         g2d.setPaint(glow);
-        g2d.fillOval(
-            w / 4 - glowSize / 2,
-            h / 4 - glowSize / 2,
-            glowSize,
-            glowSize
-        );
-
-        g2d.setComposite(
-            AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f)
-        );
+        g2d.fillOval(w / 4 - glowSize / 2, h / 4 - glowSize / 2, glowSize, glowSize);
+        g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
     }
 
         //susun semua komponen tampilan login ke layar

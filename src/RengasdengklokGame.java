@@ -38,7 +38,6 @@ public class RengasdengklokGame {
         this.uiManager.setGameOverPanel(this.gameOverPanel);
         this.uiManager.setScreenSwitcher(this::showPanel);
         this.uiManager.getUiComponents().put("databaseManager", this.dbManager);
-        this.uiManager.getUiComponents().put("decisionTimer", new DecisionTimer(30));
         this.sceneManager = new SceneManager(uiManager);
         this.quizManager = new QuizManager(dbManager);
         this.audioManager = new AudioManager();

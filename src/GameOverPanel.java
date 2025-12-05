@@ -7,7 +7,7 @@ import java.util.Random;
 import javax.imageio.ImageIO;
 
 //kelas untuk panel tampilan game over
-public class GameOverPanel extends JPanel {
+public class GameOverPanel extends BaseGamePanel {
 
     //label judul, subjudul, dan deskripsi ending
     private JLabel endingTitleLabel;
@@ -22,7 +22,6 @@ public class GameOverPanel extends JPanel {
     private Runnable onReplay;
 
     //texture noise dan background gambar
-    private BufferedImage noiseTexture;
     private BufferedImage bgImage;
 
     //data ending yang akan ditampilkan
@@ -31,13 +30,10 @@ public class GameOverPanel extends JPanel {
 
     //konstruktor panel game over
     public GameOverPanel() {
-        setLayout(null); //pakai layout manual biar bisa atur posisi bebas
-        setBackground(ColorPalette.DARK_BG_1); //warna dasar panel
-        setPreferredSize(new Dimension(1024, 768)); //ukuran panel standar
-
-        loadBackground();      //muat background gambar
-        generateNoiseTexture(); //buat texture noise
-        initComponents();       //inisialisasi semua komponen ui
+        super(); // Generate noise
+        setBackground(ColorPalette.DARK_BG_1);
+        loadBackground();
+        initComponents();
     }
 
     //fungsi untuk memuat gambar background scene terakhir
@@ -52,29 +48,7 @@ public class GameOverPanel extends JPanel {
         }
     }
 
-    //fungsi untuk bikin texture noise biar background punya efek grain halus
-    private void generateNoiseTexture() {
-        noiseTexture = new BufferedImage(100, 100, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = noiseTexture.createGraphics();
-        Random rand = new Random(12345);
-
-        //loop buat generate titik noise random
-        for (int y = 0; y < 100; y++) {
-            for (int x = 0; x < 100; x++) {
-
-                int noise = rand.nextInt(80) - 40; //nilai random -40 sampai +40
-                int gray = 128 + noise;            //warna dasar abu dengan noise
-                gray = Math.max(0, Math.min(255, gray)); //clamp biar aman
-
-                int alpha = 15; //opacity rendah biar noise halus
-                noiseTexture.setRGB(x, y, new Color(gray, gray, gray, alpha).getRGB());
-            }
-        }
-
-        g.dispose(); //hapus resource g
-    }
-
-        @Override
+    @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
@@ -108,9 +82,7 @@ public class GameOverPanel extends JPanel {
 
         //gambar noise halus di atas background
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
-        TexturePaint noisePaint = new TexturePaint(noiseTexture, new Rectangle(0, 0, 100, 100));
-        g2d.setPaint(noisePaint);
-        g2d.fillRect(0, 0, w, h);
+        drawNoise(g2d, w, h); // <--- Panggil fungsi induk
         g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
 
         //==== gambar kotak modal utama di tengah layar ====
